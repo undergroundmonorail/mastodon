@@ -240,12 +240,15 @@
   position: absolute;
 
   .fa.star-icon {
-    color: $gold-star;
+    color: $red-heart;
+  }
+  .fa.heart-icon {
+    color: $red-heart;
   }
 }
 
 .star-icon.active {
-  color: $gold-star;
+  color: $red-heart;
 }
 
 .bookmark-icon.active {

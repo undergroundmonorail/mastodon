@@ -116,7 +116,7 @@ export default class Notification extends ImmutablePureComponent {
         <div className='notification notification-favourite focusable' tabIndex='0' aria-label={notificationForScreenReader(intl, intl.formatMessage({ id: 'notification.favourite', defaultMessage: '{name} favourited your status' }, { name: notification.getIn(['account', 'acct']) }), notification.get('created_at'))}>
           <div className='notification__message'>
             <div className='notification__favourite-icon-wrapper'>
-              <i className='fa fa-fw fa-star star-icon' />
+              <i className='fa fa-fw fa-heart star-icon' />
             </div>
             <FormattedMessage id='notification.favourite' defaultMessage='{name} favourited your status' values={{ name: link }} />
           </div>

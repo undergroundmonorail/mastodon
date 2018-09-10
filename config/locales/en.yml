@@ -635,11 +635,11 @@ en:
       title: In your absence...
     favourite:
       body: 'Your status was favourited by %{name}:'
-      subject: "%{name} favourited your status"
+      subject: "%{name} used Heart Stamp!"
       title: New favourite
     follow:
       body: "%{name} is now following you!"
-      subject: "%{name} is now following you"
+      subject: "%{name} used Pursuit!"
       title: New follower
     follow_request:
       action: Manage follow requests
@@ -649,11 +649,11 @@ en:
     mention:
       action: Reply
       body: 'You were mentioned by %{name} in:'
-      subject: You were mentioned by %{name}
+      subject: "%{name} used Chatter!"
       title: New mention
     reblog:
       body: 'Your status was boosted by %{name}:'
-      subject: "%{name} boosted your status"
+      subject: "%{name} used Echoed Voice!"
       title: New boost
   number:
     human:

@@ -73,7 +73,7 @@ export default class Favourites extends ImmutablePureComponent {
     return (
       <Column ref={this.setRef} name='favourites'>
         <ColumnHeader
-          icon='star'
+          icon='heart'
           title={intl.formatMessage(messages.heading)}
           onPin={this.handlePin}
           onMove={this.handleMove}
