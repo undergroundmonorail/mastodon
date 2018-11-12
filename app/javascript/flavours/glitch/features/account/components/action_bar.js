@@ -25,6 +25,7 @@ const messages = defineMessages({
   showReblogs: { id: 'account.show_reblogs', defaultMessage: 'Show boosts from @{name}' },
   endorse: { id: 'account.endorse', defaultMessage: 'Feature on profile' },
   unendorse: { id: 'account.unendorse', defaultMessage: 'Don\'t feature on profile' },
+  add_or_remove_from_list: { id: 'account.add_or_remove_from_list', defaultMessage: 'Add or Remove from lists' },
   admin_account: { id: 'status.admin_account', defaultMessage: 'Open moderation interface for @{name}' },
 });
 
@@ -43,6 +44,7 @@ export default class ActionBar extends React.PureComponent {
     onBlockDomain: PropTypes.func.isRequired,
     onUnblockDomain: PropTypes.func.isRequired,
     onEndorseToggle: PropTypes.func.isRequired,
+    onAddToList: PropTypes.func.isRequired,
     intl: PropTypes.object.isRequired,
   };
 
@@ -50,6 +52,13 @@ export default class ActionBar extends React.PureComponent {
     navigator.share({
       url: this.props.account.get('url'),
     });
+  }
+
+  isStatusesPageActive = (match, location) => {
+    if (!match) {
+      return false;
+    }
+    return !location.pathname.match(/\/(followers|following)\/?$/);
   }
 
   render () {
@@ -78,6 +87,7 @@ export default class ActionBar extends React.PureComponent {
         }
 
         menu.push({ text: intl.formatMessage(account.getIn(['relationship', 'endorsed']) ? messages.unendorse : messages.endorse), action: this.props.onEndorseToggle });
+        menu.push({ text: intl.formatMessage(messages.add_or_remove_from_list), action: this.props.onAddToList });
         menu.push(null);
       }
 
@@ -136,7 +146,7 @@ export default class ActionBar extends React.PureComponent {
           </div>
 
           <div className='account__action-bar-links'>
-            <NavLink exact activeClassName='active' className='account__action-bar__tab' to={`/accounts/${account.get('id')}`}>
+            <NavLink isActive={this.isStatusesPageActive} activeClassName='active' className='account__action-bar__tab' to={`/accounts/${account.get('id')}`}>
               <FormattedMessage id='account.posts' defaultMessage='Posts' />
               <strong><FormattedNumber value={account.get('statuses_count')} /></strong>
             </NavLink>

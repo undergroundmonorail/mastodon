@@ -29,7 +29,7 @@ class FetchLinkCardService < BaseService
     end
 
     attach_card if @card&.persisted?
-  rescue HTTP::Error, Addressable::URI::InvalidURIError, Mastodon::LengthValidationError => e
+  rescue HTTP::Error, Addressable::URI::InvalidURIError, Mastodon::HostValidationError, Mastodon::LengthValidationError => e
     Rails.logger.debug "Error fetching link #{@url}: #{e}"
     nil
   end
@@ -62,6 +62,7 @@ class FetchLinkCardService < BaseService
 
   def attach_card
     @status.preview_cards << @card
+    Rails.cache.delete(@status)
   end
 
   def parse_urls
@@ -81,9 +82,15 @@ class FetchLinkCardService < BaseService
     uri.host.blank? || TagManager.instance.local_url?(uri.to_s) || !%w(http https).include?(uri.scheme)
   end
 
+  def mention_link?(a)
+    @status.mentions.any? do |mention|
+      a['href'] == TagManager.instance.url_for(mention.account)
+    end
+  end
+
   def skip_link?(a)
     # Avoid links for hashtags and mentions (microformats)
-    a['rel']&.include?('tag') || a['class']&.include?('u-url')
+    a['rel']&.include?('tag') || a['class']&.include?('u-url') || mention_link?(a)
   end
 
   def attempt_oembed

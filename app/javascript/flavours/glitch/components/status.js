@@ -7,7 +7,8 @@ import StatusIcons from './status_icons';
 import StatusContent from './status_content';
 import StatusActionBar from './status_action_bar';
 import AttachmentList from './attachment_list';
-import { FormattedMessage } from 'react-intl';
+import Card from '../features/status/components/card';
+import { injectIntl, FormattedMessage } from 'react-intl';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 import { MediaGallery, Video } from 'flavours/glitch/util/async-components';
 import { HotKeys } from 'react-hotkeys';
@@ -19,6 +20,24 @@ import { autoUnfoldCW } from 'flavours/glitch/util/content_warning';
 // to use the progress bar to show download progress
 import Bundle from '../features/ui/components/bundle';
 
+export const textForScreenReader = (intl, status, rebloggedByText = false, expanded = false) => {
+  const displayName = status.getIn(['account', 'display_name']);
+
+  const values = [
+    displayName.length === 0 ? status.getIn(['account', 'acct']).split('@')[0] : displayName,
+    status.get('spoiler_text') && !expanded ? status.get('spoiler_text') : status.get('search_index').slice(status.get('spoiler_text').length),
+    intl.formatDate(status.get('created_at'), { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' }),
+    status.getIn(['account', 'acct']),
+  ];
+
+  if (rebloggedByText) {
+    values.push(rebloggedByText);
+  }
+
+  return values.join(', ');
+};
+
+@injectIntl
 export default class Status extends ImmutablePureComponent {
 
   static contextTypes = {
@@ -52,6 +71,7 @@ export default class Status extends ImmutablePureComponent {
     getScrollPosition: PropTypes.func,
     updateScrollBottom: PropTypes.func,
     expanded: PropTypes.bool,
+    intl: PropTypes.object.isRequired,
   };
 
   state = {
@@ -337,6 +357,7 @@ export default class Status extends ImmutablePureComponent {
     } = this;
     const { router } = this.context;
     const {
+      intl,
       status,
       account,
       settings,
@@ -445,6 +466,7 @@ export default class Status extends ImmutablePureComponent {
                 sensitive={status.get('sensitive')}
                 letterbox={settings.getIn(['media', 'letterbox'])}
                 fullwidth={settings.getIn(['media', 'fullwidth'])}
+                hidden={isCollapsed || !isExpanded}
                 onOpenMedia={this.props.onOpenMedia}
               />
             )}
@@ -456,6 +478,15 @@ export default class Status extends ImmutablePureComponent {
       if (!status.get('sensitive') && !(status.get('spoiler_text').length > 0) && settings.getIn(['collapsed', 'backgrounds', 'preview_images'])) {
         background = attachments.getIn([0, 'preview_url']);
       }
+    } else if (status.get('card') && settings.get('inline_preview_cards')) {
+      media = (
+        <Card
+          onOpenMedia={this.props.onOpenMedia}
+          card={status.get('card')}
+          compact
+        />
+      );
+      mediaIcon = 'link';
     }
 
     //  Here we prepare extra data-* attributes for CSS selectors.
@@ -472,6 +503,12 @@ export default class Status extends ImmutablePureComponent {
       }[prepend];
 
       selectorAttribs[`data-${notifKind}-by`] = `@${account.get('acct')}`;
+    }
+
+    let rebloggedByText;
+
+    if (prepend === 'reblog') {
+      rebloggedByText = intl.formatMessage({ id: 'status.reblogged_by', defaultMessage: '{name} boosted' }, { name: account.get('acct') });
     }
 
     const handlers = {
@@ -502,6 +539,7 @@ export default class Status extends ImmutablePureComponent {
           ref={handleRef}
           tabIndex='0'
           data-featured={featured ? 'true' : null}
+          aria-label={textForScreenReader(intl, status, rebloggedByText, !status.get('hidden'))}
         >
           <header className='status__info'>
             <span>
@@ -539,7 +577,7 @@ export default class Status extends ImmutablePureComponent {
             parseClick={parseClick}
             disabled={!router}
           />
-          {!isCollapsed || !muted ? (
+          {!isCollapsed || !(muted || !settings.getIn(['collapsed', 'show_action_bar'])) ? (
             <StatusActionBar
               {...other}
               status={status}
