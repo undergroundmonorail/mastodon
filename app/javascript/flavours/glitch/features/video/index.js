@@ -5,7 +5,7 @@ import { fromJS } from 'immutable';
 import { throttle } from 'lodash';
 import classNames from 'classnames';
 import { isFullscreen, requestFullscreen, exitFullscreen } from 'flavours/glitch/util/fullscreen';
-import { displaySensitiveMedia } from 'flavours/glitch/util/initial_state';
+import { displayMedia } from 'flavours/glitch/util/initial_state';
 
 const messages = defineMessages({
   play: { id: 'video.play', defaultMessage: 'Play' },
@@ -114,7 +114,7 @@ export default class Video extends React.PureComponent {
     fullscreen: false,
     hovered: false,
     muted: false,
-    revealed: this.props.revealed === undefined ? (!this.props.sensitive || displaySensitiveMedia) : this.props.revealed,
+    revealed: this.props.revealed === undefined ? (displayMedia !== 'hide_all' && !this.props.sensitive || displayMedia === 'show_all') : this.props.revealed,
   };
 
   setPlayerRef = c => {
@@ -135,7 +135,10 @@ export default class Video extends React.PureComponent {
     this.seek = c;
   }
 
-  handleClickRoot = e => e.stopPropagation();
+  handleMouseDownRoot = e => {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 
   handlePlay = () => {
     this.setState({ paused: false });
@@ -217,6 +220,11 @@ export default class Video extends React.PureComponent {
   }
 
   componentDidUpdate (prevProps) {
+    if (this.player && this.player.offsetWidth && !this.state.fullscreen) {
+      this.setState({
+        containerWidth: this.player.offsetWidth,
+      });
+    }
     if (this.video && this.state.revealed && this.props.preventPlayback && !prevProps.preventPlayback) {
       this.video.pause();
     }
@@ -319,7 +327,7 @@ export default class Video extends React.PureComponent {
         ref={this.setPlayerRef}
         onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave}
-        onClick={this.handleClickRoot}
+        onMouseDown={this.handleMouseDownRoot}
         tabIndex={0}
       >
         <video
