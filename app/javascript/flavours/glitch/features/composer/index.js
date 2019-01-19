@@ -42,6 +42,7 @@ import ComposerUploadForm from './upload_form';
 import ComposerWarning from './warning';
 import ComposerHashtagWarning from './hashtag_warning';
 import ComposerDirectWarning from './direct_warning';
+import ComposerLengthWarning from './length_warning';
 
 //  Utils.
 import { countableText } from 'flavours/glitch/util/counter';
@@ -50,6 +51,7 @@ import { isMobile } from 'flavours/glitch/util/is_mobile';
 import { assignHandlers } from 'flavours/glitch/util/react_helpers';
 import { wrap } from 'flavours/glitch/util/redux_helpers';
 import { privacyPreference } from 'flavours/glitch/util/privacy_preference';
+import { maxChars } from 'flavours/glitch/util/initial_state';
 
 const messages = defineMessages({
   missingDescriptionMessage: {  id: 'confirmations.missing_media_description.message',
@@ -424,12 +426,14 @@ class Composer extends React.Component {
     } = this.props;
 
     let disabledButton = isSubmitting || isUploading || isChangingUpload || (!text.trim().length && !anyMedia);
+    let lengthWarning = text.length > maxChars && spoilerText.length === 0;
 
     return (
       <div className='composer'>
         {privacy === 'direct' ? <ComposerDirectWarning /> : null}
         {privacy === 'private' && amUnlocked ? <ComposerWarning /> : null}
         {privacy !== 'public' && APPROX_HASHTAG_RE.test(text) ? <ComposerHashtagWarning /> : null}
+        {lengthWarning ? <ComposerLengthWarning /> : null}
         {inReplyTo && (
           <ComposerReply
             status={inReplyTo}
@@ -499,6 +503,7 @@ class Composer extends React.Component {
         />
         <ComposerPublisher
           countText={`${spoilerText}${countableText(text)}${advancedOptions && advancedOptions.get('do_not_federate') ? ' 👁️' : ''}`}
+          lengthWarning={lengthWarning}
           disabled={disabledButton}
           intl={intl}
           onSecondarySubmit={handleSecondarySubmit}

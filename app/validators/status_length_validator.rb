@@ -4,10 +4,8 @@ class StatusLengthValidator < ActiveModel::Validator
   MAX_CHARS = (ENV['MAX_TOOT_CHARS'] || 500).to_i
 
   def validate(status)
-    return unless status.local? && !status.reblog?
-
-    @status = status
-    status.errors.add(:text, I18n.t('statuses.over_character_limit', max: MAX_CHARS)) if too_long?
+    # always allow the toot to send
+    return
   end
 
   private

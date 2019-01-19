@@ -30,6 +30,7 @@ const messages = defineMessages({
 //  The component.
 export default function ComposerPublisher ({
   countText,
+  lengthWarning,
   disabled,
   intl,
   onSecondarySubmit,
@@ -37,20 +38,20 @@ export default function ComposerPublisher ({
   privacy,
   sideArm,
 }) {
-  const diff = maxChars - length(countText || '');
+  const len = length(countText || '');
+  const diff = maxChars - len;
   const computedClass = classNames('composer--publisher', {
-    disabled: disabled || diff < 0,
-    over: diff < 0,
+    over: lengthWarning,
   });
 
   //  The result.
   return (
     <div className={computedClass}>
-      <span className='count'>{diff}</span>
+      <span className='count'>{len}</span>
       {sideArm && sideArm !== 'none' ? (
         <Button
           className='side_arm'
-          disabled={disabled || diff < 0}
+          disabled={disabled}
           onClick={onSecondarySubmit}
           style={{ padding: null }}
           text={
@@ -104,7 +105,7 @@ export default function ComposerPublisher ({
         }()}
         title={`${intl.formatMessage(messages.publish)}: ${intl.formatMessage({ id: `privacy.${privacy}.short` })}`}
         onClick={onSubmit}
-        disabled={disabled || diff < 0}
+        disabled={disabled}
       />
     </div>
   );
