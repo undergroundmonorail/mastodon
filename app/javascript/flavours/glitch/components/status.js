@@ -493,6 +493,7 @@ export default class Status extends ImmutablePureComponent {
     //  Users can use those for theming, hiding avatars etc via UserStyle
     const selectorAttribs = {
       'data-status-by': `@${status.getIn(['account', 'acct'])}`,
+      'data-id': `@${status.get('id')}`
     };
 
     if (prepend && account) {
