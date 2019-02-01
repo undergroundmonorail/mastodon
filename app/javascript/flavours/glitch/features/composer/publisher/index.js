@@ -59,7 +59,7 @@ export default function ComposerPublisher ({
               <Icon
                 icon={{
                   public: 'globe',
-                  unlisted: 'unlock-alt',
+                  unlisted: 'unlock',
                   private: 'lock',
                   direct: 'envelope',
                 }[sideArm]}
@@ -83,7 +83,7 @@ export default function ComposerPublisher ({
                     direct: 'envelope',
                     private: 'lock',
                     public: 'globe',
-                    unlisted: 'unlock-alt',
+                    unlisted: 'unlock',
                   }[privacy]}
                 />
                 {' '}
