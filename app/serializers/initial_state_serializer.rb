@@ -3,11 +3,7 @@
 class InitialStateSerializer < ActiveModel::Serializer
   attributes :meta, :compose, :accounts,
              :media_attachments, :settings,
-<<<<<<< HEAD
-             :max_toot_chars, :soft_max_chars
-=======
-             :max_toot_chars, :poll_limits
->>>>>>> glitch-soc-master
+             :max_toot_chars, :soft_max_chars, :poll_limits
 
   has_one :push_subscription, serializer: REST::WebPushSubscriptionSerializer
 
