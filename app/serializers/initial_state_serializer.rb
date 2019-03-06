@@ -3,7 +3,11 @@
 class InitialStateSerializer < ActiveModel::Serializer
   attributes :meta, :compose, :accounts,
              :media_attachments, :settings,
+<<<<<<< HEAD
              :max_toot_chars, :soft_max_chars
+=======
+             :max_toot_chars, :poll_limits
+>>>>>>> glitch-soc-master
 
   has_one :push_subscription, serializer: REST::WebPushSubscriptionSerializer
 
@@ -13,6 +17,15 @@ class InitialStateSerializer < ActiveModel::Serializer
 
   def soft_max_chars
     StatusLengthValidator::SOFT_MAX_CHARS
+  end
+
+  def poll_limits
+    {
+      max_options: PollValidator::MAX_OPTIONS,
+      max_option_chars: PollValidator::MAX_OPTION_CHARS,
+      min_expiration: PollValidator::MAX_EXPIRATION,
+      max_expiration: PollValidator::MIN_EXPIRATION,
+    }
   end
 
   def meta
