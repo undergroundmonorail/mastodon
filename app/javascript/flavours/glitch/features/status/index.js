@@ -54,6 +54,7 @@ const messages = defineMessages({
   detailedStatus: { id: 'status.detailed_status', defaultMessage: 'Detailed conversation view' },
   replyConfirm: { id: 'confirmations.reply.confirm', defaultMessage: 'Reply' },
   replyMessage: { id: 'confirmations.reply.message', defaultMessage: 'Replying now will overwrite the message you are currently composing. Are you sure you want to proceed?' },
+  tootHeading: { id: 'column.toot', defaultMessage: 'Toots and replies' },
 });
 
 const makeMapStateToProps = () => {
@@ -100,6 +101,7 @@ const makeMapStateToProps = () => {
       descendantsIds,
       settings: state.get('local_settings'),
       askReplyConfirmation: state.getIn(['local_settings', 'confirm_before_clearing_draft']) && state.getIn(['compose', 'text']).trim().length !== 0,
+      domain: state.getIn(['meta', 'domain']),
     };
   };
 
@@ -123,6 +125,7 @@ export default class Status extends ImmutablePureComponent {
     descendantsIds: ImmutablePropTypes.list,
     intl: PropTypes.object.isRequired,
     askReplyConfirmation: PropTypes.bool,
+    domain: PropTypes.string.isRequired,
   };
 
   state = {
@@ -417,7 +420,7 @@ export default class Status extends ImmutablePureComponent {
   render () {
     let ancestors, descendants;
     const { setExpansion } = this;
-    const { status, settings, ancestorsIds, descendantsIds, intl } = this.props;
+    const { status, settings, ancestorsIds, descendantsIds, intl, domain } = this.props;
     const { fullscreen, isExpanded } = this.state;
 
     if (status === null) {
@@ -451,6 +454,8 @@ export default class Status extends ImmutablePureComponent {
     return (
       <Column label={intl.formatMessage(messages.detailedStatus)}>
         <ColumnHeader
+          icon='comment'
+          title={intl.formatMessage(messages.tootHeading)}
           showBackButton
           extraButton={(
             <button className='column-header__button' title={intl.formatMessage(!isExpanded ? messages.revealAll : messages.hideAll)} aria-label={intl.formatMessage(!isExpanded ? messages.revealAll : messages.hideAll)} onClick={this.handleToggleAll} aria-pressed={!isExpanded ? 'false' : 'true'}><i className={`fa fa-${!isExpanded ? 'eye-slash' : 'eye'}`} /></button>
@@ -470,6 +475,7 @@ export default class Status extends ImmutablePureComponent {
                   onOpenMedia={this.handleOpenMedia}
                   expanded={isExpanded}
                   onToggleHidden={this.handleExpandedToggle}
+                  domain={domain}
                 />
 
                 <ActionBar
