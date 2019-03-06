@@ -26,8 +26,8 @@ const initialState = ImmutableMap({
     enabled     : true,
     auto        : ImmutableMap({
       all              : false,
-      notifications    : true,
-      lengthy          : true,
+      notifications    : false,
+      lengthy          : false,
       reblogs          : false,
       replies          : false,
       media            : false,

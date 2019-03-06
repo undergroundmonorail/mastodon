@@ -2,6 +2,7 @@
 
 class StatusLengthValidator < ActiveModel::Validator
   MAX_CHARS = (ENV['MAX_TOOT_CHARS'] || 500).to_i
+  SOFT_MAX_CHARS = (ENV['SOFT_MAX_CHARS'] || MAX_CHARS).to_i
 
   def validate(status)
     # always allow the toot to send
@@ -11,7 +12,7 @@ class StatusLengthValidator < ActiveModel::Validator
   private
 
   def too_long?
-    countable_length > MAX_CHARS
+    countable_length > SOFT_MAX_CHARS
   end
 
   def countable_length

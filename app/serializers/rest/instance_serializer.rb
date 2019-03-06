@@ -4,7 +4,7 @@ class REST::InstanceSerializer < ActiveModel::Serializer
   include RoutingHelper
 
   attributes :uri, :title, :description, :email,
-             :version, :urls, :stats, :thumbnail, :max_toot_chars,
+             :version, :urls, :stats, :thumbnail, :max_toot_chars, :soft_max_chars,
              :languages
 
   has_one :contact_account, serializer: REST::AccountSerializer
@@ -37,6 +37,10 @@ class REST::InstanceSerializer < ActiveModel::Serializer
 
   def max_toot_chars
     StatusLengthValidator::MAX_CHARS
+  end
+
+  def soft_max_chars
+    StatusLengthValidator::SOFT_MAX_CHARS
   end
 
   def stats

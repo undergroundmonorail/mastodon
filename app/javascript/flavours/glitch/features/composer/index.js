@@ -51,7 +51,7 @@ import { isMobile } from 'flavours/glitch/util/is_mobile';
 import { assignHandlers } from 'flavours/glitch/util/react_helpers';
 import { wrap } from 'flavours/glitch/util/redux_helpers';
 import { privacyPreference } from 'flavours/glitch/util/privacy_preference';
-import { maxChars } from 'flavours/glitch/util/initial_state';
+import { softMaxChars } from 'flavours/glitch/util/initial_state';
 
 const messages = defineMessages({
   missingDescriptionMessage: {  id: 'confirmations.missing_media_description.message',
@@ -426,7 +426,7 @@ class Composer extends React.Component {
     } = this.props;
 
     let disabledButton = isSubmitting || isUploading || isChangingUpload || (!text.trim().length && !anyMedia);
-    let lengthWarning = text.length > maxChars && spoilerText.length === 0;
+    let lengthWarning = text.length > softMaxChars && spoilerText.length === 0;
 
     return (
       <div className='composer'>
