@@ -32,7 +32,7 @@ class REST::InstanceSerializer < ActiveModel::Serializer
   end
 
   def thumbnail
-    instance_presenter.thumbnail ? full_asset_url(instance_presenter.thumbnail.file.url) : full_pack_url('preview.jpg')
+    instance_presenter.thumbnail ? full_asset_url(instance_presenter.thumbnail.file.url) : full_pack_url('media/images/preview.jpg')
   end
 
   def max_toot_chars
@@ -43,8 +43,8 @@ class REST::InstanceSerializer < ActiveModel::Serializer
     {
       max_options: PollValidator::MAX_OPTIONS,
       max_option_chars: PollValidator::MAX_OPTION_CHARS,
-      min_expiration: PollValidator::MAX_EXPIRATION,
-      max_expiration: PollValidator::MIN_EXPIRATION,
+      min_expiration: PollValidator::MIN_EXPIRATION,
+      max_expiration: PollValidator::MAX_EXPIRATION,
     }
   end
 
@@ -65,7 +65,7 @@ class REST::InstanceSerializer < ActiveModel::Serializer
   end
 
   def registrations
-    Setting.open_registrations && !Rails.configuration.x.single_user_mode
+    Setting.registrations_mode != 'none' && !Rails.configuration.x.single_user_mode
   end
 
   private
