@@ -4,7 +4,7 @@ import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { defineMessages } from 'react-intl';
 
-const APPROX_HASHTAG_RE = /(?:^|[^\/\)\w])#(\S+)/i;
+const APPROX_HASHTAG_RE = /(?:^|[^\/\)\w])#[^!](\S+)/i;
 
 //  Actions.
 import {
