@@ -669,10 +669,6 @@ class Status < ApplicationRecord
           case cmd[1]
           when 'permalink', 'self'
             chunk = TagManager.instance.url_for(self)
-          when 'cloudroot'
-            chunk = "https://monsterpit.cloud/~/#{account.username}"
-          when 'blogroot'
-            chunk = "https://monsterpit.blog/~/#{account.username}"
           end
         when 'ping'
           mentions = []
@@ -784,6 +780,8 @@ class Status < ApplicationRecord
             var_stack.push('_comment')
             component_stack.push(:var)
           end
+        when 'shrug'
+          chunk = '¯\_(ツ)_/¯'
         end
       end
 
