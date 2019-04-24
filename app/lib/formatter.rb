@@ -4,6 +4,16 @@ require 'singleton'
 require 'kramdown'
 require_relative './sanitize_config'
 
+class APRender < Redcarpet::Render::Safe
+  include Redcarpet::Render::SmartyPants
+
+  def autolink(link, link_type)
+    return link if link_type == :email
+    link = CGI::escapeHTML(link)
+    return %(<a href="#{link}" target="_blank" rel="nofollow noopener">#{link}</a>)
+  end
+end
+
 class Formatter
   include Singleton
   include RoutingHelper
@@ -40,6 +50,7 @@ class Formatter
     html = format_markdown(html)
     html = encode_and_link_urls(html, linkable_accounts)
     html = encode_custom_emojis(html, status.emojis, options[:autoplay]) if options[:custom_emojify]
+    html.delete!("\n")
 
     html.html_safe # rubocop:disable Rails/OutputSafety
   end
@@ -66,7 +77,7 @@ class Formatter
 
     options[:link_attributes][:rel] += ' me' if me
 
-    renderer = Redcarpet::Render::Safe.new(options)
+    renderer = APRender.new(options)
     markdown = Redcarpet::Markdown.new(renderer, extensions)
     markdown.render(html)
   end
@@ -118,8 +129,8 @@ class Formatter
   end
 
   def linkify(text)
-    html = encode_and_link_urls(text)
-    html = format_markdown(html)
+    html = format_markdown(text)
+    html = encode_and_link_urls(html)
 
     html.html_safe # rubocop:disable Rails/OutputSafety
   end
@@ -143,13 +154,13 @@ class Formatter
     end
 
     rewrite(html.dup, entities) do |entity|
-      if entity[:url]
-        #link_to_url(entity, options)
-        entity[:url]
-      elsif entity[:hashtag]
+      if entity[:hashtag]
         link_to_hashtag(entity)
       elsif entity[:screen_name]
         link_to_mention(entity, accounts)
+      elsif entity[:url]
+        #link_to_url(entity, options)
+        entity[:url]
       end
     end
   end
