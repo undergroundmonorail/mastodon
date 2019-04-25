@@ -66,12 +66,13 @@ class Formatter
       superscript: true,
       underline: true,
       highlight: true,
-      footnotes: true
+      footnotes: true,
     }
 
     options = {
       link_attributes: { target: '_blank', rel: 'nofollow noopener' },
       no_styles: true,
+      hard_wrap: true,
     }
 
     options[:link_attributes][:rel] += ' me' if me
