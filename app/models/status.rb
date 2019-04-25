@@ -782,7 +782,7 @@ class Status < ApplicationRecord
             component_stack.push(:var)
           end
         when 'shrug'
-          chunk = '¯\_(ツ)_/¯'
+          chunk = '¯\\\_(ツ)\_/¯'
         end
       end
 
