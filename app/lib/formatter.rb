@@ -78,11 +78,19 @@ class Formatter
 
     renderer = APRender.new(options)
     markdown = Redcarpet::Markdown.new(renderer, extensions)
-    markdown.render(html)
+    html = reformat(markdown.render(html))
+    html = html.gsub("\r\n", "\n").gsub("\r", "\n")
+    code_safe_strip(html)
   end
 
   def reformat(html, escape = true)
     html = sanitize(html, Sanitize::Config::MASTODON_STRICT)
+  end
+
+  def code_safe_strip(html, char="\n")
+    html = html.split(/(<code[ >].*?\/code>)/m)
+    html.each_slice(2) { |part| part[0].delete!(char) }
+    html.join
   end
 
   def plaintext(status)
