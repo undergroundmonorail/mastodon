@@ -4,6 +4,16 @@ require 'singleton'
 require 'kramdown'
 require_relative './sanitize_config'
 
+class APRender < Redcarpet::Render::Safe
+  include Redcarpet::Render::SmartyPants
+
+  def autolink(link, link_type)
+    return link if link_type == :email
+    link = CGI::escapeHTML(link)
+    return %(<a href="#{link}" target="_blank" rel="nofollow noopener">#{link}</a>)
+  end
+end
+
 class Formatter
   include Singleton
   include RoutingHelper
@@ -66,7 +76,7 @@ class Formatter
 
     options[:link_attributes][:rel] += ' me' if me
 
-    renderer = Redcarpet::Render::Safe.new(options)
+    renderer = APRender.new(options)
     markdown = Redcarpet::Markdown.new(renderer, extensions)
     markdown.render(html)
   end
