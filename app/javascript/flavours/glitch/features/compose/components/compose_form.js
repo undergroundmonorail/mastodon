@@ -364,7 +364,7 @@ class ComposeForm extends ImmutablePureComponent {
         />
 
         <Publisher
-          countText={`${spoilerText}${countableText(text)}${advancedOptions && advancedOptions.get('do_not_federate') ? ' 👁️' : ''}`}
+          countText={`${spoilerText}${countableText(text)}${advancedOptions && advancedOptions.get('do_not_federate') ? '\n\n❄️' : ''}`}
           disabled={disabledButton}
           onSecondarySubmit={handleSecondarySubmit}
           onSubmit={handleSubmit}
