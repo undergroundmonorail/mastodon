@@ -117,15 +117,15 @@ class Formatter
 
   def format_field(account, str, **options)
     return reformat(str).html_safe unless account.local? # rubocop:disable Rails/OutputSafety
-    html = format_markdown(str)
-    html = encode_and_link_urls(html, me: true)
+    html = encode_and_link_urls(str, me: true)
     html = encode_custom_emojis(html, account.emojis, options[:autoplay]) if options[:custom_emojify]
     html.html_safe # rubocop:disable Rails/OutputSafety
   end
 
   def linkify(text)
-    html = format_markdown(text)
-    html = encode_and_link_urls(html)
+    html = encode_and_link_urls(text)
+    html = simple_format(html, {}, sanitize: false)
+    html = html.delete("\n")
 
     html.html_safe # rubocop:disable Rails/OutputSafety
   end
