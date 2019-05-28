@@ -2,7 +2,7 @@
   "name": "mastodon",
   "license": "AGPL-3.0-or-later",
   "engines": {
-    "node": ">=8 <11"
+    "node": ">=8.12 <12"
   },
   "scripts": {
     "postversion": "git push --tags",
@@ -70,6 +70,7 @@
     "@babel/preset-env": "^7.3.4",
     "@babel/preset-react": "^7.0.0",
     "@babel/runtime": "^7.3.4",
+    "@clusterws/cws": "^0.14.0",
     "array-includes": "^3.0.3",
     "atrament": "^0.2.3",
     "autoprefixer": "^9.4.10",
@@ -80,6 +81,7 @@
     "babel-plugin-react-intl": "^3.0.1",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "babel-runtime": "^6.26.0",
+    "blurhash": "^1.0.0",
     "classnames": "^2.2.5",
     "compression-webpack-plugin": "^2.0.0",
     "cross-env": "^5.1.4",
@@ -106,7 +108,7 @@
     "intl-messageformat": "^2.2.0",
     "intl-relativeformat": "^2.1.0",
     "is-nan": "^1.2.1",
-    "js-yaml": "^3.11.0",
+    "js-yaml": "^3.13.1",
     "lodash": "^4.7.11",
     "mark-loader": "^0.1.6",
     "marky": "^1.2.1",
@@ -159,10 +161,9 @@
     "tiny-queue": "^0.2.1",
     "uglifyjs-webpack-plugin": "^2.1.2",
     "uuid": "^3.1.0",
-    "uws": "10.148.0",
     "webpack": "^4.29.6",
     "webpack-assets-manifest": "^3.1.1",
-    "webpack-bundle-analyzer": "^3.1.0",
+    "webpack-bundle-analyzer": "^3.3.2",
     "webpack-cli": "^3.2.3",
     "webpack-merge": "^4.2.1",
     "websocket.js": "^0.1.12"

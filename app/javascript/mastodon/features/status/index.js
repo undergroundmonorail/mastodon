@@ -43,7 +43,7 @@ import ImmutablePureComponent from 'react-immutable-pure-component';
 import { HotKeys } from 'react-hotkeys';
 import { boostModal, deleteModal } from '../../initial_state';
 import { attachFullscreenListener, detachFullscreenListener, isFullscreen } from '../ui/util/fullscreen';
-import { textForScreenReader } from '../../components/status';
+import { textForScreenReader, defaultMediaVisibility } from '../../components/status';
 import Icon from 'mastodon/components/icon';
 
 const messages = defineMessages({
@@ -131,6 +131,7 @@ class Status extends ImmutablePureComponent {
 
   state = {
     fullscreen: false,
+    showMedia: defaultMediaVisibility(this.props.status),
   };
 
   componentWillMount () {
@@ -146,6 +147,14 @@ class Status extends ImmutablePureComponent {
       this._scrolledIntoView = false;
       this.props.dispatch(fetchStatus(nextProps.params.statusId));
     }
+
+    if (!Immutable.is(nextProps.status, this.props.status) && nextProps.status) {
+      this.setState({ showMedia: defaultMediaVisibility(nextProps.status) });
+    }
+  }
+
+  handleToggleMediaVisibility = () => {
+    this.setState({ showMedia: !this.state.showMedia });
   }
 
   handleFavouriteClick = (status) => {
@@ -312,19 +321,23 @@ class Status extends ImmutablePureComponent {
     this.handleToggleHidden(this.props.status);
   }
 
+  handleHotkeyToggleSensitive = () => {
+    this.handleToggleMediaVisibility();
+  }
+
   handleMoveUp = id => {
     const { status, ancestorsIds, descendantsIds } = this.props;
 
     if (id === status.get('id')) {
-      this._selectChild(ancestorsIds.size - 1);
+      this._selectChild(ancestorsIds.size - 1, true);
     } else {
       let index = ancestorsIds.indexOf(id);
 
       if (index === -1) {
         index = descendantsIds.indexOf(id);
-        this._selectChild(ancestorsIds.size + index);
+        this._selectChild(ancestorsIds.size + index, true);
       } else {
-        this._selectChild(index - 1);
+        this._selectChild(index - 1, true);
       }
     }
   }
@@ -333,23 +346,29 @@ class Status extends ImmutablePureComponent {
     const { status, ancestorsIds, descendantsIds } = this.props;
 
     if (id === status.get('id')) {
-      this._selectChild(ancestorsIds.size + 1);
+      this._selectChild(ancestorsIds.size + 1, false);
     } else {
       let index = ancestorsIds.indexOf(id);
 
       if (index === -1) {
         index = descendantsIds.indexOf(id);
-        this._selectChild(ancestorsIds.size + index + 2);
+        this._selectChild(ancestorsIds.size + index + 2, false);
       } else {
-        this._selectChild(index + 1);
+        this._selectChild(index + 1, false);
       }
     }
   }
 
-  _selectChild (index) {
-    const element = this.node.querySelectorAll('.focusable')[index];
+  _selectChild (index, align_top) {
+    const container = this.node;
+    const element = container.querySelectorAll('.focusable')[index];
 
     if (element) {
+      if (align_top && container.scrollTop > element.offsetTop) {
+        element.scrollIntoView(true);
+      } else if (!align_top && container.scrollTop + container.clientHeight < element.offsetTop + element.offsetHeight) {
+        element.scrollIntoView(false);
+      }
       element.focus();
     }
   }
@@ -426,6 +445,7 @@ class Status extends ImmutablePureComponent {
       mention: this.handleHotkeyMention,
       openProfile: this.handleHotkeyOpenProfile,
       toggleHidden: this.handleHotkeyToggleHidden,
+      toggleSensitive: this.handleHotkeyToggleSensitive,
     };
 
     return (
@@ -449,6 +469,8 @@ class Status extends ImmutablePureComponent {
                   onOpenMedia={this.handleOpenMedia}
                   onToggleHidden={this.handleToggleHidden}
                   domain={domain}
+                  showMedia={this.state.showMedia}
+                  onToggleMediaVisibility={this.handleToggleMediaVisibility}
                 />
 
                 <ActionBar

@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { defineMessages } from 'react-intl';
+import { defineMessages, injectIntl } from 'react-intl';
 import ComposeForm from '../components/compose_form';
 import {
   changeCompose,
@@ -90,8 +90,8 @@ const mapDispatchToProps = (dispatch, { intl }) => ({
     dispatch(fetchComposeSuggestions(token));
   },
 
-  onSuggestionSelected(position, token, suggestion) {
-    dispatch(selectComposeSuggestion(position, token, suggestion));
+  onSuggestionSelected(position, token, suggestion, path) {
+    dispatch(selectComposeSuggestion(position, token, suggestion, path));
   },
 
   onChangeSpoilerText(text) {
@@ -133,4 +133,4 @@ const mapDispatchToProps = (dispatch, { intl }) => ({
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(ComposeForm);
+export default injectIntl(connect(mapStateToProps, mapDispatchToProps)(ComposeForm));
