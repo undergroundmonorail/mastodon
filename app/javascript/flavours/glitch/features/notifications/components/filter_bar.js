@@ -70,7 +70,7 @@ class FilterBar extends React.PureComponent {
           onClick={this.onClick('favourite')}
           title={intl.formatMessage(tooltips.favourites)}
         >
-          <i className='fa fa-fw fa-star' />
+          <i className='fa fa-fw fa-heart' />
         </button>
         <button
           className={selectedFilter === 'reblog' ? 'active' : ''}
