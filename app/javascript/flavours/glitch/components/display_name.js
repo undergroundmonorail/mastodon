@@ -21,9 +21,9 @@ export default function DisplayName ({
 
   let acct = account.get('acct');
 
-  if (acct.indexOf('@') === -1 && localDomain) {
-    acct = `${acct}@${localDomain}`;
-  }
+//  if (acct.indexOf('@') === -1 && localDomain) {
+//    acct = `${acct}@${localDomain}`;
+//  }
 
   if (others && others.size > 0) {
     displayName = others.take(2).map(a => (
