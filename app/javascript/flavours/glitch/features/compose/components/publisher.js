@@ -11,7 +11,7 @@ import Button from 'flavours/glitch/components/button';
 import Icon from 'flavours/glitch/components/icon';
 
 //  Utils.
-import { maxChars } from 'flavours/glitch/util/initial_state';
+import { softMaxChars } from 'flavours/glitch/util/initial_state';
 
 //  Messages.
 const messages = defineMessages({
@@ -30,6 +30,7 @@ class Publisher extends ImmutablePureComponent {
 
   static propTypes = {
     countText: PropTypes.string,
+    spoilerText: PropTypes.string,
     disabled: PropTypes.bool,
     intl: PropTypes.object.isRequired,
     onSecondarySubmit: PropTypes.func,
@@ -39,21 +40,21 @@ class Publisher extends ImmutablePureComponent {
   };
 
   render () {
-    const { countText, disabled, intl, onSecondarySubmit, onSubmit, privacy, sideArm } = this.props;
+    const { countText, spoilerText, disabled, intl, onSecondarySubmit, onSubmit, privacy, sideArm } = this.props;
 
-    const diff = maxChars - length(countText || '');
+    const statusLen = length(countText || '');
     const computedClass = classNames('composer--publisher', {
-      disabled: disabled || diff < 0,
-      over: diff < 0,
+      disabled: statusLen === 0,
+      over: statusLen > softMaxChars && length(spoilerText) === 0,
     });
 
     return (
       <div className={computedClass}>
-        <span className='count'>{diff}</span>
+        <span className='count'>{statusLen}</span>
         {sideArm && sideArm !== 'none' ? (
           <Button
             className='side_arm'
-            disabled={disabled || diff < 0}
+            disabled={statusLen === 0}
             onClick={onSecondarySubmit}
             style={{ padding: null }}
             text={
@@ -107,7 +108,7 @@ class Publisher extends ImmutablePureComponent {
           }()}
           title={`${intl.formatMessage(messages.publish)}: ${intl.formatMessage({ id: `privacy.${privacy}.short` })}`}
           onClick={onSubmit}
-          disabled={disabled || diff < 0}
+          disabled={statusLen === 0}
         />
       </div>
     );
