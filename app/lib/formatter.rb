@@ -181,8 +181,7 @@ class Formatter
 
     rewrite(html.dup, entities, options[:keep_html]) do |entity|
       if entity[:url]
-        #link_to_url(entity, options)
-        entity[:url]
+        link_to_url(entity, options)
       elsif entity[:hashtag]
         link_to_hashtag(entity)
       elsif entity[:screen_name]

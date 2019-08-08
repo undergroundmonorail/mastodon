@@ -247,22 +247,10 @@ class MediaAttachment < ApplicationRecord
   end
 
   def set_type_and_extension
-<<<<<<< HEAD
     self.type = VIDEO_MIME_TYPES.include?(file_content_type) ? :video :
       AUDIO_MIME_TYPES.include?(file_content_type) ? :audio :
       IMAGE_MIME_TYPES.include?(file_content_type) ? :image :
       :unknown
-=======
-    self.type = begin
-      if VIDEO_MIME_TYPES.include?(file_content_type)
-        :video
-      elsif AUDIO_MIME_TYPES.include?(file_content_type)
-        :audio
-      else
-        :image
-      end
-    end
->>>>>>> 0baaee495f83e1b4b5d42196b78aa220256b75ee
   end
 
   def set_meta
