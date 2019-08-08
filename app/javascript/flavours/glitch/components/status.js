@@ -106,6 +106,7 @@ class Status extends ImmutablePureComponent {
     statusId: undefined,
     revealBehindCW: undefined,
     showCard: false,
+    forceFilter: undefined,
   }
 
   // Avoid checking props that are functions (and whose equality will always
@@ -126,6 +127,7 @@ class Status extends ImmutablePureComponent {
     'isExpanded',
     'isCollapsed',
     'showMedia',
+    'forceFilter',
   ]
 
   //  If our settings have changed to disable collapsed statuses, then we
@@ -427,6 +429,15 @@ class Status extends ImmutablePureComponent {
     this.handleToggleMediaVisibility();
   }
 
+  handleUnfilterClick = e => {
+    const { onUnfilter, status } = this.props;
+    onUnfilter(status.get('reblog') ? status.get('reblog') : status, () => this.setState({ forceFilter: false }));
+  }
+
+  handleFilterClick = () => {
+    this.setState({ forceFilter: true });
+  }
+
   handleRef = c => {
     this.node = c;
   }
@@ -465,7 +476,7 @@ class Status extends ImmutablePureComponent {
       featured,
       ...other
     } = this.props;
-    const { isExpanded, isCollapsed } = this.state;
+    const { isExpanded, isCollapsed, forceFilter } = this.state;
     let background = null;
     let attachments = null;
     let media = null;
@@ -485,7 +496,8 @@ class Status extends ImmutablePureComponent {
       );
     }
 
-    if (status.get('filtered') || status.getIn(['reblog', 'filtered'])) {
+    const filtered = (status.get('filtered') || status.getIn(['reblog', 'filtered'])) && settings.get('filtering_behavior') !== 'content_warning';
+    if (forceFilter === undefined ? filtered : forceFilter) {
       const minHandlers = this.props.muted ? {} : {
         moveUp: this.handleHotkeyMoveUp,
         moveDown: this.handleHotkeyMoveDown,
@@ -495,6 +507,12 @@ class Status extends ImmutablePureComponent {
         <HotKeys handlers={minHandlers}>
           <div className='status__wrapper status__wrapper--filtered focusable' tabIndex='0' ref={this.handleRef}>
             <FormattedMessage id='status.filtered' defaultMessage='Filtered' />
+            {settings.get('filtering_behavior') !== 'upstream' && ' '}
+            {settings.get('filtering_behavior') !== 'upstream' && (
+              <button className='status__wrapper--filtered__button' onClick={this.handleUnfilterClick}>
+                <FormattedMessage id='status.show_filter_reason' defaultMessage='(show why)' />
+              </button>
+            )}
           </div>
         </HotKeys>
       );
@@ -682,6 +700,7 @@ class Status extends ImmutablePureComponent {
             onExpandedToggle={this.handleExpandedToggle}
             parseClick={parseClick}
             disabled={!router}
+            tagLinks={settings.get('tag_misleading_links')}
           />
           {!isCollapsed || !(muted || !settings.getIn(['collapsed', 'show_action_bar'])) ? (
             <StatusActionBar
@@ -690,6 +709,7 @@ class Status extends ImmutablePureComponent {
               account={status.get('account')}
               showReplyCount={settings.get('show_reply_count')}
               directMessage={!!otherAccounts}
+              onFilter={this.handleFilterClick}
             />
           ) : null}
           {notification ? (

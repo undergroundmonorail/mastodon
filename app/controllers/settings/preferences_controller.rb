@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class Settings::PreferencesController < Settings::BaseController
+  layout 'admin'
+
+  before_action :authenticate_user!
+
   def show; end
 
   def update
@@ -53,7 +57,9 @@ class Settings::PreferencesController < Settings::BaseController
       :setting_advanced_layout,
       :setting_default_content_type,
       :setting_use_blurhash,
-      notification_emails: %i(follow follow_request reblog favourite mention digest report pending_account),
+      :setting_use_pending_items,
+      :setting_trends,
+      notification_emails: %i(follow follow_request reblog favourite mention digest report pending_account trending_tag),
       interactions: %i(must_be_follower must_be_following must_be_following_dm)
     )
   end
