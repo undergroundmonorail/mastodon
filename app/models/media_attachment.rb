@@ -189,7 +189,7 @@ class MediaAttachment < ApplicationRecord
 
     def file_styles(f)
       if f.instance.file_content_type == 'image/gif' || VIDEO_CONVERTIBLE_MIME_TYPES.include?(f.instance.file_content_type)
-        VIDEO_CONVERTED_STYLES
+        VIDEO_STYLES
       elsif IMAGE_MIME_TYPES.include?(f.instance.file_content_type)
         IMAGE_STYLES
       elsif AUDIO_MIME_TYPES.include? f.instance.file_content_type
