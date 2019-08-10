@@ -98,6 +98,11 @@ class MediaAttachment < ApplicationRecord
     },
   }.freeze
 
+  VIDEO_CONVERTED_STYLES = {
+    small: VIDEO_STYLES[:small],
+    original: VIDEO_FORMAT,
+  }.freeze
+
   SIZE_LIMIT = 40.megabytes
   GIF_LIMIT = ENV.fetch('MAX_GIF_SIZE', 200).to_i.kilobytes
 
@@ -189,7 +194,7 @@ class MediaAttachment < ApplicationRecord
 
     def file_styles(f)
       if f.instance.file_content_type == 'image/gif' || VIDEO_CONVERTIBLE_MIME_TYPES.include?(f.instance.file_content_type)
-        VIDEO_STYLES
+        VIDEO_CONVERTED_STYLES
       elsif IMAGE_MIME_TYPES.include?(f.instance.file_content_type)
         IMAGE_STYLES
       elsif AUDIO_MIME_TYPES.include? f.instance.file_content_type
