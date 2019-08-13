@@ -343,7 +343,7 @@ class Bangtags
             'htm'         => 'text/html',
             'html'        => 'text/html',
           }
-          v = cmd[1].downcase
+          c = cmd[1].downcase
           status.content_type = content_types[c] unless content_types[c].nil?
         when 'visibility'
           chunk = nil
@@ -385,7 +385,12 @@ class Bangtags
             keyboard[(keyboard.size * (rand ** 3)).floor].split('').sample
           end
         when 'shrug'
-          chunk = '¯\\\_(ツ)\_/¯'
+          chunk = case status.content_type
+            when 'text/plain', 'text/html'
+              '¯\\_(ツ)_/¯'
+            when 'text/markdown'
+              '¯\\\\\\_(ツ)_/¯'
+          end
         end
       end
 
