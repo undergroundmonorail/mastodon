@@ -50,8 +50,7 @@
 
 class Account < ApplicationRecord
   USERNAME_RE = /[a-z0-9_]+([a-z0-9_\.-]+[a-z0-9_]+)?/i
-  MENTION_RE  = /(?<=^|[^\/[:word:]])@((#{USERNAME_RE})(?:@[a-z0-9\.\-]+[a-z0-9]+)?)/i
-  MIN_FOLLOWERS_DISCOVERY = 10
+  MENTION_RE  = /(?<=^|[^\/[:word:]])@((#{USERNAME_RE})(?:@[[:word:]\.\-]+[a-z0-9]+)?)/i
 
   include AccountAssociations
   include AccountAvatar
@@ -98,17 +97,20 @@ class Account < ApplicationRecord
   scope :without_silenced, -> { where(silenced_at: nil) }
   scope :recent, -> { reorder(id: :desc) }
   scope :bots, -> { where(actor_type: %w(Application Service)) }
+  scope :groups, -> { where(actor_type: 'Group') }
   scope :alphabetic, -> { order(domain: :asc, username: :asc) }
   scope :by_domain_accounts, -> { group(:domain).select(:domain, 'COUNT(*) AS accounts_count').order('accounts_count desc') }
   scope :matches_username, ->(value) { where(arel_table[:username].matches("#{value}%")) }
   scope :matches_display_name, ->(value) { where(arel_table[:display_name].matches("#{value}%")) }
   scope :matches_domain, ->(value) { where(arel_table[:domain].matches("%#{value}%")) }
   scope :searchable, -> { without_suspended.where(moved_to_account_id: nil) }
-  scope :discoverable, -> { searchable.without_silenced.where(discoverable: true).joins(:account_stat).where(AccountStat.arel_table[:followers_count].gteq(MIN_FOLLOWERS_DISCOVERY)) }
+  scope :discoverable, -> { searchable.without_silenced.where(discoverable: true).left_outer_joins(:account_stat) }
   scope :tagged_with, ->(tag) { joins(:accounts_tags).where(accounts_tags: { tag_id: tag }) }
-  scope :by_recent_status, -> { order(Arel.sql('(case when account_stats.last_status_at is null then 1 else 0 end) asc, account_stats.last_status_at desc')) }
+  scope :by_recent_status, -> { order(Arel.sql('(case when account_stats.last_status_at is null then 1 else 0 end) asc, account_stats.last_status_at desc, accounts.id desc')) }
   scope :popular, -> { order('account_stats.followers_count desc') }
   scope :by_domain_and_subdomains, ->(domain) { where(domain: domain).or(where(arel_table[:domain].matches('%.' + domain))) }
+  scope :not_excluded_by_account, ->(account) { where.not(id: account.excluded_from_timeline_account_ids) }
+  scope :not_domain_blocked_by_account, ->(account) { where(arel_table[:domain].eq(nil).or(arel_table[:domain].not_in(account.excluded_from_timeline_domains))) }
 
   delegate :email,
            :unconfirmed_email,
@@ -118,6 +120,7 @@ class Account < ApplicationRecord
            :approved?,
            :pending?,
            :disabled?,
+           :unconfirmed_or_pending?,
            :role,
            :admin?,
            :moderator?,
@@ -130,6 +133,8 @@ class Account < ApplicationRecord
            allow_nil: true
 
   delegate :chosen_languages, to: :user, prefix: false, allow_nil: true
+
+  update_index('accounts#account', :self)
 
   def local?
     domain.nil?
@@ -153,8 +158,18 @@ class Account < ApplicationRecord
     self.actor_type = ActiveModel::Type::Boolean.new.cast(val) ? 'Service' : 'Person'
   end
 
+  def group?
+    actor_type == 'Group'
+  end
+
+  alias group group?
+
   def acct
     local? ? username : "#{username}@#{domain}"
+  end
+
+  def pretty_acct
+    local? ? username : "#{username}@#{Addressable::IDNA.to_unicode(domain)}"
   end
 
   def local_username_and_domain
@@ -171,6 +186,10 @@ class Account < ApplicationRecord
 
   def subscribed?
     subscription_expires_at.present?
+  end
+
+  def searchable?
+    !(suspended? || moved?)
   end
 
   def possibly_stale?
@@ -194,7 +213,7 @@ class Account < ApplicationRecord
   end
 
   def unsilence!
-    update!(silenced_at: nil, trust_level: trust_level == TRUST_LEVELS[:untrusted] ? TRUST_LEVELS[:trusted] : trust_level)
+    update!(silenced_at: nil)
   end
 
   def suspended?
@@ -304,10 +323,9 @@ class Account < ApplicationRecord
   def save_with_optional_media!
     save!
   rescue ActiveRecord::RecordInvalid
-    self.avatar              = nil
-    self.header              = nil
-    self[:avatar_remote_url] = ''
-    self[:header_remote_url] = ''
+    self.avatar = nil
+    self.header = nil
+
     save!
   end
 
@@ -424,12 +442,14 @@ class Account < ApplicationRecord
             SELECT target_account_id
             FROM follows
             WHERE account_id = ?
+            UNION ALL
+            SELECT ?
           )
           SELECT
             accounts.*,
             (count(f.id) + 1) * ts_rank_cd(#{textsearch}, #{query}, 32) AS rank
           FROM accounts
-          LEFT OUTER JOIN follows AS f ON (accounts.id = f.account_id AND f.target_account_id = ?) OR (accounts.id = f.target_account_id AND f.account_id = ?)
+          LEFT OUTER JOIN follows AS f ON (accounts.id = f.account_id AND f.target_account_id = ?)
           WHERE accounts.id IN (SELECT * FROM first_degree)
             AND #{query} @@ #{textsearch}
             AND accounts.suspended_at IS NULL
@@ -508,7 +528,7 @@ class Account < ApplicationRecord
   end
 
   def emojifiable_text
-    [note, display_name, fields.map(&:value)].join(' ')
+    [note, display_name, fields.map(&:name), fields.map(&:value)].join(' ')
   end
 
   def clean_feed_manager

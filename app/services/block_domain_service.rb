@@ -20,13 +20,13 @@ class BlockDomainService < BaseService
   end
 
   def process_domain_block!
-    clear_media! if domain_block.reject_media?
-
     if domain_block.silence?
       silence_accounts!
     elsif domain_block.suspend?
       suspend_accounts!
     end
+
+    clear_media! if domain_block.reject_media?
   end
 
   def invalidate_association_caches!
@@ -53,7 +53,7 @@ class BlockDomainService < BaseService
 
   def suspend_accounts!
     blocked_domain_accounts.without_suspended.reorder(nil).find_each do |account|
-      SuspendAccountService.new.call(account, suspended_at: @domain_block.created_at)
+      SuspendAccountService.new.call(account, reserve_username: true, suspended_at: @domain_block.created_at)
     end
   end
 

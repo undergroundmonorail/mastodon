@@ -1,6 +1,7 @@
 import loadPolyfills from '../mastodon/load_polyfills';
 import ready from '../mastodon/ready';
 import { start } from '../mastodon/common';
+import loadKeyboardExtensions from '../mastodon/load_keyboard_extensions';
 
 start();
 
@@ -14,10 +15,10 @@ function main() {
   const React = require('react');
   const ReactDOM = require('react-dom');
   const Rellax = require('rellax');
-  const createHistory = require('history').createBrowserHistory;
+  const { createBrowserHistory } = require('history');
 
   const scrollToDetailedStatus = () => {
-    const history = createHistory();
+    const history = createBrowserHistory();
     const detailedStatuses = document.querySelectorAll('.public-layout .detailed-status');
     const location = history.location;
 
@@ -100,9 +101,31 @@ function main() {
 
     delegate(document, '.custom-emoji', 'mouseover', getEmojiAnimationHandler('data-original'));
     delegate(document, '.custom-emoji', 'mouseout', getEmojiAnimationHandler('data-static'));
+
+    delegate(document, '.blocks-table button.icon-button', 'click', function(e) {
+      e.preventDefault();
+
+      const classList = this.firstElementChild.classList;
+      classList.toggle('fa-chevron-down');
+      classList.toggle('fa-chevron-up');
+      this.parentElement.parentElement.nextElementSibling.classList.toggle('hidden');
+    });
+  });
+
+  delegate(document, '.sidebar__toggle__icon', 'click', () => {
+    const target = document.querySelector('.sidebar ul');
+
+    if (target.style.display === 'block') {
+      target.style.display = 'none';
+    } else {
+      target.style.display = 'block';
+    }
   });
 }
 
-loadPolyfills().then(main).catch(error => {
-  console.error(error);
-});
+loadPolyfills()
+  .then(main)
+  .then(loadKeyboardExtensions)
+  .catch(error => {
+    console.error(error);
+  });

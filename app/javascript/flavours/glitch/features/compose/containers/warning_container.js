@@ -4,6 +4,7 @@ import Warning from '../components/warning';
 import PropTypes from 'prop-types';
 import { FormattedMessage } from 'react-intl';
 import { me, softMaxChars } from 'flavours/glitch/util/initial_state';
+import { profileLink, termsLink } from 'flavours/glitch/util/backend_links';
 
 const APPROX_HASHTAG_RE = /(?:^|[^\/\)\w])#(\w*[a-zA-Z·]\w*)/i;
 
@@ -28,7 +29,7 @@ const WarningWrapper = ({ needsLockWarning, hashtagWarning, directMessageWarning
   if (directMessageWarning) {
     const message = (
       <span>
-        <FormattedMessage id='compose_form.direct_message_warning' defaultMessage='This toot will only be sent to all the mentioned users.' /> <a href='/terms' target='_blank'><FormattedMessage id='compose_form.direct_message_warning_learn_more' defaultMessage='Learn more' /></a>
+        <FormattedMessage id='compose_form.direct_message_warning' defaultMessage='This toot will only be sent to all the mentioned users.' /> {!!termsLink && <a href='/terms' target='_blank'><FormattedMessage id='compose_form.direct_message_warning_learn_more' defaultMessage='Learn more' /></a>}
       </span>
     );
 

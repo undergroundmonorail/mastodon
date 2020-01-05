@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
+import Icon from 'flavours/glitch/components/icon';
 
 const tooltips = defineMessages({
   mentions: { id: 'notifications.filter.mentions', defaultMessage: 'Mentions' },
@@ -63,7 +64,7 @@ class FilterBar extends React.PureComponent {
           onClick={this.onClick('mention')}
           title={intl.formatMessage(tooltips.mentions)}
         >
-          <i className='fa fa-fw fa-at' />
+          <Icon id='reply-all' fixedWidth />
         </button>
         <button
           className={selectedFilter === 'favourite' ? 'active' : ''}
@@ -77,21 +78,21 @@ class FilterBar extends React.PureComponent {
           onClick={this.onClick('reblog')}
           title={intl.formatMessage(tooltips.boosts)}
         >
-          <i className='fa fa-fw fa-retweet' />
+          <Icon id='retweet' fixedWidth />
         </button>
         <button
           className={selectedFilter === 'poll' ? 'active' : ''}
           onClick={this.onClick('poll')}
           title={intl.formatMessage(tooltips.polls)}
         >
-          <i className='fa fa-fw fa-tasks' />
+          <Icon id='tasks' fixedWidth />
         </button>
         <button
           className={selectedFilter === 'follow' ? 'active' : ''}
           onClick={this.onClick('follow')}
           title={intl.formatMessage(tooltips.follows)}
         >
-          <i className='fa fa-fw fa-user-plus' />
+          <Icon id='user-plus' fixedWidth />
         </button>
       </div>
     );

@@ -75,8 +75,10 @@ class SearchQueryTransformer < Parslet::Transform
 
     if clause[:term]
       TermClause.new(prefix, operator, clause[:term].to_s)
+    elsif clause[:shortcode]
+      TermClause.new(prefix, operator, ":#{clause[:term]}:")
     elsif clause[:phrase]
-      PhraseClause.new(prefix, operator, clause[:phrase].map { |p| p[:term].to_s }.join(' '))
+      PhraseClause.new(prefix, operator, clause[:phrase].is_a?(Array) ? clause[:phrase].map { |p| p[:term].to_s }.join(' ') : clause[:phrase].to_s)
     else
       raise "Unexpected clause type: #{clause}"
     end

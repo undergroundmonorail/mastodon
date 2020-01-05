@@ -2,10 +2,10 @@
 
 module Admin::FilterHelper
   ACCOUNT_FILTERS      = %i(local remote by_domain active pending silenced suspended username display_name email ip staff).freeze
-  REPORT_FILTERS       = %i(resolved account_id target_account_id).freeze
+  REPORT_FILTERS       = %i(resolved account_id target_account_id by_target_domain).freeze
   INVITE_FILTER        = %i(available expired).freeze
   CUSTOM_EMOJI_FILTERS = %i(local remote by_domain shortcode).freeze
-  TAGS_FILTERS         = %i(context review).freeze
+  TAGS_FILTERS         = %i(directory reviewed unreviewed pending_review popular active name).freeze
   INSTANCES_FILTERS    = %i(limited by_domain).freeze
   FOLLOWERS_FILTERS    = %i(relationship status by_domain activity order).freeze
 
