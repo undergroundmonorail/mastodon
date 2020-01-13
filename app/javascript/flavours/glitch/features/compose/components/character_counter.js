@@ -6,20 +6,19 @@ export default class CharacterCounter extends React.PureComponent {
 
   static propTypes = {
     text: PropTypes.string.isRequired,
-    max: PropTypes.number.isRequired,
+    softMax: PropTypes.number.isRequired,
   };
 
-  checkRemainingText (diff) {
-    if (diff < 0) {
-      return <span className='character-counter character-counter--over'>{diff}</span>;
+  checkRemainingText (len) {
+    if (len < this.props.softMax) {
+      return <span className='character-counter character-counter--over'>{len}</span>;
     }
 
-    return <span className='character-counter'>{diff}</span>;
+    return <span className='character-counter'>{len}</span>;
   }
 
   render () {
-    const diff = this.props.max - length(this.props.text);
-    return this.checkRemainingText(diff);
+    return this.checkRemainingText(length(this.props.text));
   }
 
 }
