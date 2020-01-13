@@ -200,11 +200,11 @@ ActiveRecord::Schema.define(version: 2019_12_12_003415) do
     t.bigint "user_id"
     t.string "dump_file_name"
     t.string "dump_content_type"
+    t.bigint "dump_file_size"
     t.datetime "dump_updated_at"
     t.boolean "processed", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "dump_file_size"
   end
 
   create_table "blocks", force: :cascade do |t|
