@@ -6,7 +6,7 @@ class AccountRelationshipsPresenter
               :endorsed
 
   def initialize(account_ids, current_account_id, **options)
-    @account_ids        = account_ids.map { |a| a.is_a?(Account) ? a.id : a.to_i }
+    @account_ids        = account_ids.map { |a| a.is_a?(Account) ? a.id : a }
     @current_account_id = current_account_id
 
     @following       = cached[:following].merge(Account.following_map(@uncached_account_ids, @current_account_id))

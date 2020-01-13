@@ -2,18 +2,6 @@
   padding: 10px;
 }
 
-.character-counter {
-  cursor: default;
-  font-family: $font-sans-serif, sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: $lighter-text-color;
-
-  &.character-counter--over {
-    color: $warning-red;
-  }
-}
-
 .no-reduce-motion .composer--spoiler {
   transition: height 0.4s ease, opacity 0.4s ease;
 }
@@ -43,10 +31,6 @@
     font-size: 14px;
     font-family: inherit;
     resize: vertical;
-
-    &::placeholder {
-      color: $dark-text-color;
-    }
 
     &:focus { outline: 0 }
     @include single-column('screen and (max-width: 630px)') { font-size: 16px }
@@ -143,7 +127,6 @@
     overflow: visible;
     white-space: pre-wrap;
     padding-top: 5px;
-    overflow: hidden;
 
     p, pre, blockquote {
       margin-bottom: 20px;
@@ -249,7 +232,6 @@
 .compose-form__autosuggest-wrapper,
 .autosuggest-input {
   position: relative;
-  width: 100%;
 
   label {
     .autosuggest-textarea__textarea {
@@ -268,10 +250,6 @@
       font-family: inherit;
       resize: none;
       scrollbar-color: initial;
-
-      &::placeholder {
-        color: $dark-text-color;
-      }
 
       &::-webkit-scrollbar {
         all: unset;
@@ -336,46 +314,29 @@
 }
 
 .autosuggest-textarea__suggestions__item {
-  padding: 10px;
-  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
   border-radius: 4px;
+  padding: 10px;
+  font-size: 14px;
+  line-height: 18px;
+  overflow: hidden;
+  cursor: pointer;
 
   &:hover,
   &:focus,
   &:active,
   &.selected { background: darken($ui-secondary-color, 10%) }
 
-  > .account,
-  > .emoji,
-  > .autosuggest-hashtag {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    line-height: 18px;
-    font-size: 14px;
-  }
-
-  .autosuggest-hashtag {
-    justify-content: space-between;
-
-    &__name {
-      flex: 1 1 auto;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    strong {
-      font-weight: 500;
-    }
-
-    &__uses {
-      flex: 0 0 auto;
-      text-align: right;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+  & > .emoji {
+    img {
+      display: block;
+      float: left;
+      margin-right: 8px;
+      width: 18px;
+      height: 18px;
     }
   }
 
@@ -528,18 +489,12 @@
   background: $simple-background-color;
 }
 
-.composer--options-wrapper {
+.composer--options {
   padding: 10px;
   background: darken($simple-background-color, 8%);
+  box-shadow: inset 0 5px 5px rgba($base-shadow-color, 0.05);
   border-radius: 0 0 4px 4px;
   height: 27px;
-  display: flex;
-  justify-content: space-between;
-  flex: 0 0 auto;
-}
-
-.composer--options {
-  display: flex;
   flex: 0 0 auto;
 
   & > * {
@@ -562,11 +517,6 @@
     height: 27px;
     background: transparent;
   }
-}
-
-.compose--counter-wrapper {
-  align-self: center;
-  margin-right: 4px;
 }
 
 .composer--options--dropdown {
@@ -638,6 +588,13 @@
   overflow: hidden;
   justify-content: flex-end;
   flex: 0 0 auto;
+
+  & > .count {
+    display: inline-block;
+    margin: 0 16px 0 8px;
+    font-size: 16px;
+    line-height: 36px;
+  }
 
   & > .primary {
     display: inline-block;

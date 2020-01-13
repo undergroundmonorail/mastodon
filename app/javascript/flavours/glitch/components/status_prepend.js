@@ -3,8 +3,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { FormattedMessage } from 'react-intl';
-import Icon from 'flavours/glitch/components/icon';
-import { me } from 'flavours/glitch/util/initial_state';
 
 export default class StatusPrepend extends React.PureComponent {
 
@@ -65,21 +63,12 @@ export default class StatusPrepend extends React.PureComponent {
         />
       );
     case 'poll':
-      if (me === account.get('id')) {
-        return (
-          <FormattedMessage
-            id='notification.own_poll'
-            defaultMessage='Your poll has ended'
-          />
-        );
-      } else {
-        return (
-          <FormattedMessage
-            id='notification.poll'
-            defaultMessage='A poll you have voted in has ended'
-          />
-        );
-      }
+      return (
+        <FormattedMessage
+          id='notification.poll'
+          defaultMessage='A poll you have voted in has ended'
+        />
+      );
     }
     return null;
   }

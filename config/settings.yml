@@ -29,7 +29,6 @@ defaults: &defaults
   reduce_motion: false
   show_application: false
   system_font_ui: false
-  system_emoji_font: false
   noindex: false
   hide_followers_count: false
   enable_keybase: true
@@ -40,8 +39,6 @@ defaults: &defaults
   use_blurhash: true
   use_pending_items: false
   trends: true
-  trendable_by_default: false
-  crop_images: true
   notification_emails:
     follow: false
     reblog: false
@@ -66,7 +63,6 @@ defaults: &defaults
     - mod
     - moderator
   disallowed_hashtags: # space separated string or list of hashtags without the hash
-  enable_bootstrap_timeline_accounts: true
   bootstrap_timeline_accounts: ''
   activity_api_enabled: true
   peers_api_enabled: true
@@ -75,8 +71,6 @@ defaults: &defaults
   show_replies_in_public_timelines: false
   default_content_type: 'text/plain'
   spam_check_enabled: true
-  show_domain_blocks: 'disabled'
-  show_domain_blocks_rationale: 'disabled'
 
 development:
   <<: *defaults

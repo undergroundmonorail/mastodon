@@ -21,7 +21,6 @@ describe Settings::MigrationsController do
 
       let(:user) { Fabricate(:user, account: account) }
       let(:account) { Fabricate(:account, moved_to_account: moved_to_account) }
-
       before { sign_in user, scope: :user }
 
       context 'when user does not have moved to account' do
@@ -33,7 +32,7 @@ describe Settings::MigrationsController do
         end
       end
 
-      context 'when user has a moved to account' do
+      context 'when user does not have moved to account' do
         let(:moved_to_account) { Fabricate(:account) }
 
         it 'renders show page' do
@@ -44,22 +43,21 @@ describe Settings::MigrationsController do
     end
   end
 
-  describe 'POST #create' do
+  describe 'PUT #update' do
     context 'when user is not sign in' do
-      subject { post :create }
+      subject { put :update }
 
       it_behaves_like 'authenticate user'
     end
 
     context 'when user is sign in' do
-      subject { post :create, params: { account_migration: { acct: acct, current_password: '12345678' } } }
+      subject { put :update, params: { migration: { acct: acct } } }
 
-      let(:user) { Fabricate(:user, password: '12345678') }
-
+      let(:user) { Fabricate(:user) }
       before { sign_in user, scope: :user }
 
       context 'when migration account is changed' do
-        let(:acct) { Fabricate(:account, also_known_as: [ActivityPub::TagManager.instance.uri_for(user.account)]) }
+        let(:acct) { Fabricate(:account) }
 
         it 'updates moved to account' do
           is_expected.to redirect_to settings_migration_path

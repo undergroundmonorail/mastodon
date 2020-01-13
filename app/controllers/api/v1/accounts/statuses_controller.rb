@@ -3,8 +3,7 @@
 class Api::V1::Accounts::StatusesController < Api::BaseController
   before_action -> { authorize_if_got_token! :read, :'read:statuses' }
   before_action :set_account
-
-  after_action :insert_pagination_headers, unless: -> { truthy_param?(:pinned) }
+  after_action :insert_pagination_headers
 
   respond_to :json
 
@@ -29,13 +28,14 @@ class Api::V1::Accounts::StatusesController < Api::BaseController
 
   def account_statuses
     statuses = truthy_param?(:pinned) ? pinned_scope : permitted_account_statuses
+    statuses = statuses.paginate_by_id(limit_param(DEFAULT_STATUSES_LIMIT), params_slice(:max_id, :since_id, :min_id))
 
     statuses.merge!(only_media_scope) if truthy_param?(:only_media)
     statuses.merge!(no_replies_scope) if truthy_param?(:exclude_replies)
     statuses.merge!(no_reblogs_scope) if truthy_param?(:exclude_reblogs)
     statuses.merge!(hashtag_scope)    if params[:tagged].present?
 
-    statuses.paginate_by_id(limit_param(DEFAULT_STATUSES_LIMIT), params_slice(:max_id, :since_id, :min_id))
+    statuses
   end
 
   def permitted_account_statuses
@@ -57,8 +57,6 @@ class Api::V1::Accounts::StatusesController < Api::BaseController
   end
 
   def pinned_scope
-    return Status.none if @account.blocking?(current_account)
-
     @account.pinned_statuses
   end
 

@@ -115,7 +115,8 @@ class Formatter
   end
 
   def format_field(account, str, **options)
-    html = account.local? ? encode_and_link_urls(str, me: true) : reformat(str)
+    return reformat(str).html_safe unless account.local? # rubocop:disable Rails/OutputSafety
+    html = encode_and_link_urls(str, me: true)
     html = encode_custom_emojis(html, account.emojis, options[:autoplay]) if options[:custom_emojify]
     html.html_safe # rubocop:disable Rails/OutputSafety
   end
@@ -337,7 +338,7 @@ class Formatter
 
   def link_to_url(entity, options = {})
     url        = Addressable::URI.parse(entity[:url])
-    html_attrs = { target: '_blank', rel: 'nofollow noopener noreferrer' }
+    html_attrs = { target: '_blank', rel: 'nofollow noopener' }
 
     html_attrs[:rel] = "me #{html_attrs[:rel]}" if options[:me]
 

@@ -12,9 +12,8 @@ Chewy.settings = {
   sidekiq: { queue: 'pull' },
 }
 
-Chewy.root_strategy              = :custom_sidekiq
-Chewy.request_strategy           = :custom_sidekiq
-Chewy.use_after_commit_callbacks = false
+Chewy.root_strategy    = enabled ? :sidekiq : :bypass
+Chewy.request_strategy = enabled ? :sidekiq : :bypass
 
 module Chewy
   class << self

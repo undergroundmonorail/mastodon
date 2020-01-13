@@ -10,7 +10,7 @@ import AttachmentList from './attachment_list';
 import Card from '../features/status/components/card';
 import { injectIntl, FormattedMessage } from 'react-intl';
 import ImmutablePureComponent from 'react-immutable-pure-component';
-import { MediaGallery, Video, Audio } from 'flavours/glitch/util/async-components';
+import { MediaGallery, Video } from 'flavours/glitch/util/async-components';
 import { HotKeys } from 'react-hotkeys';
 import NotificationOverlayContainer from 'flavours/glitch/features/notifications/containers/overlay_container';
 import classNames from 'classnames';
@@ -376,22 +376,6 @@ class Status extends ImmutablePureComponent {
     this.props.onOpenVideo(media, startTime);
   }
 
-  handleHotkeyOpenMedia = e => {
-    const { status, onOpenMedia, onOpenVideo } = this.props;
-
-    e.preventDefault();
-
-    if (status.get('media_attachments').size > 0) {
-      if (status.getIn(['media_attachments', 0, 'type']) === 'audio') {
-        // TODO: toggle play/paused?
-      } else if (status.getIn(['media_attachments', 0, 'type']) === 'video') {
-        onOpenVideo(status.getIn(['media_attachments', 0]), 0);
-      } else {
-        onOpenMedia(status.get('media_attachments'), 0);
-      }
-    }
-  }
-
   handleHotkeyReply = e => {
     e.preventDefault();
     this.props.onReply(this.props.status, this.context.router.history);
@@ -459,15 +443,11 @@ class Status extends ImmutablePureComponent {
   }
 
   renderLoadingMediaGallery () {
-    return <div className='media-gallery' style={{ height: '110px' }} />;
+    return <div className='media_gallery' style={{ height: '110px' }} />;
   }
 
   renderLoadingVideoPlayer () {
-    return <div className='video-player' style={{ height: '110px' }} />;
-  }
-
-  renderLoadingAudioPlayer () {
-    return <div className='audio-player' style={{ height: '110px' }} />;
+    return <div className='media-spoiler-video' style={{ height: '110px' }} />;
   }
 
   render () {
@@ -506,31 +486,13 @@ class Status extends ImmutablePureComponent {
       return null;
     }
 
-    const handlers = {
-      reply: this.handleHotkeyReply,
-      favourite: this.handleHotkeyFavourite,
-      boost: this.handleHotkeyBoost,
-      mention: this.handleHotkeyMention,
-      open: this.handleHotkeyOpen,
-      openProfile: this.handleHotkeyOpenProfile,
-      moveUp: this.handleHotkeyMoveUp,
-      moveDown: this.handleHotkeyMoveDown,
-      toggleSpoiler: this.handleExpandedToggle,
-      bookmark: this.handleHotkeyBookmark,
-      toggleCollapse: this.handleHotkeyCollapse,
-      toggleSensitive: this.handleHotkeyToggleSensitive,
-      openMedia: this.handleHotkeyOpenMedia,
-    };
-
     if (hidden) {
       return (
-        <HotKeys handlers={handlers}>
-          <div ref={this.handleRef} className='status focusable' tabIndex='0'>
-            {status.getIn(['account', 'display_name']) || status.getIn(['account', 'username'])}
-            {' '}
-            {status.get('content')}
-          </div>
-        </HotKeys>
+        <div ref={this.handleRef}>
+          {status.getIn(['account', 'display_name']) || status.getIn(['account', 'username'])}
+          {' '}
+          {status.get('content')}
+        </div>
       );
     }
 
@@ -582,24 +544,7 @@ class Status extends ImmutablePureComponent {
             media={status.get('media_attachments')}
           />
         );
-      } else if (attachments.getIn([0, 'type']) === 'audio') {
-        const attachment = status.getIn(['media_attachments', 0]);
-
-        media = (
-          <Bundle fetchComponent={Audio} loading={this.renderLoadingAudioPlayer} >
-            {Component => (
-              <Component
-                src={attachment.get('url')}
-                alt={attachment.get('description')}
-                duration={attachment.getIn(['meta', 'original', 'duration'], 0)}
-                peaks={[0]}
-                height={70}
-              />
-            )}
-          </Bundle>
-        );
-        mediaIcon = 'music';
-      } else if (attachments.getIn([0, 'type']) === 'video') {
+      } else if (['video', 'audio'].includes(attachments.getIn([0, 'type']))) {
         const attachment = status.getIn(['media_attachments', 0]);
 
         media = (
@@ -622,7 +567,7 @@ class Status extends ImmutablePureComponent {
             />)}
           </Bundle>
         );
-        mediaIcon = 'video-camera';
+        mediaIcon = attachment.get('type') === 'video' ? 'video-camera' : 'music';
       } else {  //  Media type is 'image' or 'gifv'
         media = (
           <Bundle fetchComponent={MediaGallery} loading={this.renderLoadingMediaGallery}>
@@ -684,6 +629,21 @@ class Status extends ImmutablePureComponent {
       rebloggedByText = intl.formatMessage({ id: 'status.reblogged_by', defaultMessage: '{name} boosted' }, { name: account.get('acct') });
     }
 
+    const handlers = {
+      reply: this.handleHotkeyReply,
+      favourite: this.handleHotkeyFavourite,
+      boost: this.handleHotkeyBoost,
+      mention: this.handleHotkeyMention,
+      open: this.handleHotkeyOpen,
+      openProfile: this.handleHotkeyOpenProfile,
+      moveUp: this.handleHotkeyMoveUp,
+      moveDown: this.handleHotkeyMoveDown,
+      toggleSpoiler: this.handleExpandedToggle,
+      bookmark: this.handleHotkeyBookmark,
+      toggleCollapse: this.handleHotkeyCollapse,
+      toggleSensitive: this.handleHotkeyToggleSensitive,
+    };
+
     const computedClass = classNames('status', `status-${status.get('visibility')}`, {
       collapsed: isCollapsed,
       'has-background': isCollapsed && background,
@@ -741,7 +701,6 @@ class Status extends ImmutablePureComponent {
             parseClick={parseClick}
             disabled={!router}
             tagLinks={settings.get('tag_misleading_links')}
-            rewriteMentions={settings.get('rewrite_mentions')}
           />
           {!isCollapsed || !(muted || !settings.getIn(['collapsed', 'show_action_bar'])) ? (
             <StatusActionBar

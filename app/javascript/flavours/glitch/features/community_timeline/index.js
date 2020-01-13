@@ -14,22 +14,20 @@ const messages = defineMessages({
   title: { id: 'column.community', defaultMessage: 'Local timeline' },
 });
 
-const mapStateToProps = (state, { columnId }) => {
+const mapStateToProps = (state, { onlyMedia, columnId }) => {
   const uuid = columnId;
   const columns = state.getIn(['settings', 'columns']);
   const index = columns.findIndex(c => c.get('uuid') === uuid);
-  const onlyMedia = (columnId && index >= 0) ? columns.get(index).getIn(['params', 'other', 'onlyMedia']) : state.getIn(['settings', 'community', 'other', 'onlyMedia']);
-  const timelineState = state.getIn(['timelines', `community${onlyMedia ? ':media' : ''}`]);
 
   return {
-    hasUnread: !!timelineState && timelineState.get('unread') > 0,
-    onlyMedia,
+    hasUnread: state.getIn(['timelines', `community${onlyMedia ? ':media' : ''}`, 'unread']) > 0,
+    onlyMedia: (columnId && index >= 0) ? columns.get(index).getIn(['params', 'other', 'onlyMedia']) : state.getIn(['settings', 'community', 'other', 'onlyMedia']),
   };
 };
 
-export default @connect(mapStateToProps)
+@connect(mapStateToProps)
 @injectIntl
-class CommunityTimeline extends React.PureComponent {
+export default class CommunityTimeline extends React.PureComponent {
 
   static defaultProps = {
     onlyMedia: false,
@@ -106,7 +104,7 @@ class CommunityTimeline extends React.PureComponent {
     const pinned = !!columnId;
 
     return (
-      <Column ref={this.setRef} name='local' bindToDocument={!multiColumn} label={intl.formatMessage(messages.title)}>
+      <Column ref={this.setRef} name='local' label={intl.formatMessage(messages.title)}>
         <ColumnHeader
           icon='users'
           active={hasUnread}
@@ -126,7 +124,6 @@ class CommunityTimeline extends React.PureComponent {
           timelineId={`community${onlyMedia ? ':media' : ''}`}
           onLoadMore={this.handleLoadMore}
           emptyMessage={<FormattedMessage id='empty_column.community' defaultMessage='The local timeline is empty. Write something publicly to get the ball rolling!' />}
-          bindToDocument={!multiColumn}
         />
       </Column>
     );

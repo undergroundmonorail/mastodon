@@ -55,8 +55,7 @@ module Admin
       params.permit(
         :account_id,
         :resolved,
-        :target_account_id,
-        :by_target_domain
+        :target_account_id
       )
     end
 

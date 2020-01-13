@@ -77,7 +77,9 @@ export default class ComposerOptionsDropdownContent extends React.PureComponent 
     document.removeEventListener('touchend', this.handleDocumentClick, withPassive);
   }
 
-  handleClick = (name, e) => {
+  handleClick = (e) => {
+    const name = e.currentTarget.getAttribute('data-index');
+
     const {
       onChange,
       onClose,
@@ -101,8 +103,9 @@ export default class ComposerOptionsDropdownContent extends React.PureComponent 
     }
   }
 
-  handleKeyDown = (name, e) => {
+  handleKeyDown = e => {
     const { items } = this.props;
+    const name = e.currentTarget.getAttribute('data-index');
     const index = items.findIndex(item => {
       return (item.name === name);
     });
@@ -180,16 +183,16 @@ export default class ComposerOptionsDropdownContent extends React.PureComponent 
     let prefix = null;
 
     if (on !== null && typeof on !== 'undefined') {
-      prefix = <Toggle checked={on} onChange={this.handleClick.bind(this, name)} />;
+      prefix = <Toggle checked={on} onChange={this.handleClick} />;
     } else if (icon) {
-      prefix = <Icon className='icon' fixedWidth id={icon} />
+      prefix = <Icon className='icon' fullwidth icon={icon} />
     }
 
     return (
       <div
         className={computedClass}
-        onClick={this.handleClick.bind(this, name)}
-        onKeyDown={this.handleKeyDown.bind(this, name)}
+        onClick={this.handleClick}
+        onKeyDown={this.handleKeyDown}
         role='option'
         tabIndex='0'
         key={name}

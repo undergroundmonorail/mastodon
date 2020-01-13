@@ -7,7 +7,6 @@ import { defineMessages, injectIntl } from 'react-intl';
 //  Mastodon imports.
 import IconButton from './icon_button';
 import VisibilityIcon from './status_visibility_icon';
-import Icon from 'flavours/glitch/components/icon';
 
 //  Messages for use with internationalization stuff.
 const messages = defineMessages({
@@ -22,8 +21,8 @@ const messages = defineMessages({
   localOnly: { id: 'status.local_only', defaultMessage: 'Only visible from your instance' },
 });
 
-export default @injectIntl
-class StatusIcons extends React.PureComponent {
+@injectIntl
+export default class StatusIcons extends React.PureComponent {
 
   static propTypes = {
     status: ImmutablePropTypes.map.isRequired,
@@ -75,26 +74,21 @@ class StatusIcons extends React.PureComponent {
     return (
       <div className='status__info__icons'>
         {status.get('in_reply_to_id', null) !== null ? (
-          <Icon
-            className='status__reply-icon'
-            fixedWidth
-            id='comment'
+          <i
+            className={`fa fa-fw fa-comment status__reply-icon`}
             aria-hidden='true'
             title={intl.formatMessage(messages.inReplyTo)}
           />
         ) : null}
         {status.get('local_only') &&
-          <Icon
-            fixedWidth
-            id='home'
+          <i
+            className={`fa fa-fw fa-home`}
             aria-hidden='true'
             title={intl.formatMessage(messages.localOnly)}
           />}
         {mediaIcon ? (
-          <Icon
-            fixedWidth
-            className='status__media-icon'
-            id={mediaIcon}
+          <i
+            className={`fa fa-fw fa-${mediaIcon} status__media-icon`}
             aria-hidden='true'
             title={this.mediaIconTitleText()}
           />
@@ -103,7 +97,7 @@ class StatusIcons extends React.PureComponent {
         {collapsible ? (
           <IconButton
             className='status__collapse-button'
-            animate
+            animate flip
             active={collapsed}
             title={
               collapsed ?

@@ -9,7 +9,6 @@ import LoadingIndicator from '../../components/loading_indicator';
 import Column from '../ui/components/column';
 import ProfileColumnHeader from 'flavours/glitch/features/account/components/profile_column_header';
 import HeaderContainer from './containers/header_container';
-import ColumnBackButton from 'flavours/glitch/components/column_back_button';
 import { List as ImmutableList } from 'immutable';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 import { FormattedMessage } from 'react-intl';
@@ -28,8 +27,8 @@ const mapStateToProps = (state, { params: { accountId }, withReplies = false }) 
   };
 };
 
-export default @connect(mapStateToProps)
-class AccountTimeline extends ImmutablePureComponent {
+@connect(mapStateToProps)
+export default class AccountTimeline extends ImmutablePureComponent {
 
   static propTypes = {
     params: PropTypes.object.isRequired,
@@ -40,7 +39,6 @@ class AccountTimeline extends ImmutablePureComponent {
     hasMore: PropTypes.bool,
     withReplies: PropTypes.bool,
     isAccount: PropTypes.bool,
-    multiColumn: PropTypes.bool,
   };
 
   componentWillMount () {
@@ -78,12 +76,11 @@ class AccountTimeline extends ImmutablePureComponent {
   }
 
   render () {
-    const { statusIds, featuredStatusIds, isLoading, hasMore, isAccount, multiColumn } = this.props;
+    const { statusIds, featuredStatusIds, isLoading, hasMore, isAccount } = this.props;
 
     if (!isAccount) {
       return (
         <Column>
-          <ColumnBackButton multiColumn={multiColumn} />
           <MissingIndicator />
         </Column>
       );
@@ -99,7 +96,7 @@ class AccountTimeline extends ImmutablePureComponent {
 
     return (
       <Column ref={this.setRef} name='account'>
-        <ProfileColumnHeader onClick={this.handleHeaderClick} multiColumn={multiColumn} />
+        <ProfileColumnHeader onClick={this.handleHeaderClick} />
 
         <StatusList
           prepend={<HeaderContainer accountId={this.props.params.accountId} />}
@@ -111,7 +108,6 @@ class AccountTimeline extends ImmutablePureComponent {
           hasMore={hasMore}
           onLoadMore={this.handleLoadMore}
           emptyMessage={<FormattedMessage id='empty_column.account_timeline' defaultMessage='No toots here!' />}
-          bindToDocument={!multiColumn}
         />
       </Column>
     );

@@ -32,8 +32,8 @@ const messages = defineMessages({
   copy: { id: 'status.copy', defaultMessage: 'Copy link to status' },
 });
 
-export default @injectIntl
-class ActionBar extends React.PureComponent {
+@injectIntl
+export default class ActionBar extends React.PureComponent {
 
   static contextTypes = {
     router: PropTypes.object,

@@ -6,7 +6,7 @@ import StatusContainer from 'flavours/glitch/containers/status_container';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 import LoadGap from './load_gap';
 import ScrollableList from './scrollable_list';
-import RegenerationIndicator from 'flavours/glitch/components/regeneration_indicator';
+import { FormattedMessage } from 'react-intl';
 
 export default class StatusList extends ImmutablePureComponent {
 
@@ -81,7 +81,18 @@ export default class StatusList extends ImmutablePureComponent {
     const { isLoading, isPartial } = other;
 
     if (isPartial) {
-      return <RegenerationIndicator />;
+      return (
+        <div className='regeneration-indicator'>
+          <div>
+            <div className='regeneration-indicator__figure' />
+
+            <div className='regeneration-indicator__label'>
+              <FormattedMessage id='regeneration_indicator.label' tagName='strong' defaultMessage='Loading&hellip;' />
+              <FormattedMessage id='regeneration_indicator.sublabel' defaultMessage='Your home feed is being prepared!' />
+            </div>
+          </div>
+        </div>
+      );
     }
 
     let scrollableContent = (isLoading || statusIds.size > 0) ? (

@@ -16,7 +16,6 @@ filenames.forEach(filename => {
   filtered[locale] = {
     'notification.favourite': full['notification.favourite'] || '',
     'notification.follow': full['notification.follow'] || '',
-    'notification.follow_request': full['notification.follow_request'] || '',
     'notification.mention': full['notification.mention'] || '',
     'notification.reblog': full['notification.reblog'] || '',
     'notification.poll': full['notification.poll'] || '',

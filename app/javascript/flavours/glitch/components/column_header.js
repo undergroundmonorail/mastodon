@@ -1,10 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { createPortal } from 'react-dom';
 import classNames from 'classnames';
 import { defineMessages, FormattedMessage, injectIntl } from 'react-intl';
 import ImmutablePropTypes from 'react-immutable-proptypes';
-import Icon from 'flavours/glitch/components/icon';
 
 import NotificationPurgeButtonsContainer from 'flavours/glitch/containers/notification_purge_buttons_container';
 
@@ -16,8 +14,8 @@ const messages = defineMessages({
   enterNotifCleaning : { id: 'notification_purge.start', defaultMessage: 'Enter notification cleaning mode' },
 });
 
-export default @injectIntl
-class ColumnHeader extends React.PureComponent {
+@injectIntl
+export default class ColumnHeader extends React.PureComponent {
 
   static contextTypes = {
     router: PropTypes.object,
@@ -37,7 +35,6 @@ class ColumnHeader extends React.PureComponent {
     onEnterCleaningMode: PropTypes.func,
     children: PropTypes.node,
     pinned: PropTypes.bool,
-    placeholder: PropTypes.bool,
     onPin: PropTypes.func,
     onMove: PropTypes.func,
     onClick: PropTypes.func,
@@ -106,7 +103,7 @@ class ColumnHeader extends React.PureComponent {
   }
 
   render () {
-    const { intl, icon, active, children, pinned, multiColumn, extraButton, showBackButton, intl: { formatMessage }, notifCleaning, notifCleaningActive, placeholder } = this.props;
+    const { intl, icon, active, children, pinned, multiColumn, extraButton, showBackButton, intl: { formatMessage }, notifCleaning, notifCleaningActive } = this.props;
     const { collapsed, animating, animatingNCD } = this.state;
 
     let title = this.props.title;
@@ -151,22 +148,22 @@ class ColumnHeader extends React.PureComponent {
     }
 
     if (multiColumn && pinned) {
-      pinButton = <button key='pin-button' className='text-btn column-header__setting-btn' onClick={this.handlePin}><Icon id='times' /> <FormattedMessage id='column_header.unpin' defaultMessage='Unpin' /></button>;
+      pinButton = <button key='pin-button' className='text-btn column-header__setting-btn' onClick={this.handlePin}><i className='fa fa fa-times' /> <FormattedMessage id='column_header.unpin' defaultMessage='Unpin' /></button>;
 
       moveButtons = (
         <div key='move-buttons' className='column-header__setting-arrows'>
-          <button title={formatMessage(messages.moveLeft)} aria-label={formatMessage(messages.moveLeft)} className='text-btn column-header__setting-btn' onClick={this.handleMoveLeft}><Icon id='chevron-left' /></button>
-          <button title={formatMessage(messages.moveRight)} aria-label={formatMessage(messages.moveRight)} className='text-btn column-header__setting-btn' onClick={this.handleMoveRight}><Icon id='chevron-right' /></button>
+          <button title={formatMessage(messages.moveLeft)} aria-label={formatMessage(messages.moveLeft)} className='text-btn column-header__setting-btn' onClick={this.handleMoveLeft}><i className='fa fa-chevron-left' /></button>
+          <button title={formatMessage(messages.moveRight)} aria-label={formatMessage(messages.moveRight)} className='text-btn column-header__setting-btn' onClick={this.handleMoveRight}><i className='fa fa-chevron-right' /></button>
         </div>
       );
-    } else if (multiColumn && this.props.onPin) {
-      pinButton = <button key='pin-button' className='text-btn column-header__setting-btn' onClick={this.handlePin}><Icon id='plus' /> <FormattedMessage id='column_header.pin' defaultMessage='Pin' /></button>;
+    } else if (multiColumn) {
+      pinButton = <button key='pin-button' className='text-btn column-header__setting-btn' onClick={this.handlePin}><i className='fa fa fa-plus' /> <FormattedMessage id='column_header.pin' defaultMessage='Pin' /></button>;
     }
 
     if (!pinned && (multiColumn || showBackButton)) {
       backButton = (
         <button onClick={this.handleBackClick} className='column-header__back-button'>
-          <Icon id='chevron-left' className='column-back-button__icon' fixedWidth />
+          <i className='fa fa-fw fa-chevron-left column-back-button__icon' />
           <FormattedMessage id='column_back_button.label' defaultMessage='Back' />
         </button>
       );
@@ -181,18 +178,18 @@ class ColumnHeader extends React.PureComponent {
       collapsedContent.push(pinButton);
     }
 
-    if (children || (multiColumn && this.props.onPin)) {
-      collapseButton = <button className={collapsibleButtonClassName} title={formatMessage(collapsed ? messages.show : messages.hide)} aria-label={formatMessage(collapsed ? messages.show : messages.hide)} aria-pressed={collapsed ? 'false' : 'true'} onClick={this.handleToggleClick}><Icon id='sliders' /></button>;
+    if (children || multiColumn) {
+      collapseButton = <button className={collapsibleButtonClassName} title={formatMessage(collapsed ? messages.show : messages.hide)} aria-label={formatMessage(collapsed ? messages.show : messages.hide)} aria-pressed={collapsed ? 'false' : 'true'} onClick={this.handleToggleClick}><i className='fa fa-sliders' /></button>;
     }
 
     const hasTitle = icon && title;
 
-    const component = (
+    return (
       <div className={wrapperClassName}>
         <h1 className={buttonClassName}>
           {hasTitle && (
             <button onClick={this.handleTitleClick}>
-              <Icon id={icon} fixedWidth className='column-header__icon' />
+              <i className={`fa fa-fw fa-${icon} column-header__icon`} />
               {title}
             </button>
           )}
@@ -209,7 +206,7 @@ class ColumnHeader extends React.PureComponent {
                 onClick={this.onEnterCleaningMode}
                 className={notifCleaningButtonClassName}
               >
-                <Icon id='eraser' />
+                <i className='fa fa-eraser' />
               </button>
             ) : null}
             {collapseButton}
@@ -231,24 +228,6 @@ class ColumnHeader extends React.PureComponent {
         </div>
       </div>
     );
-
-    if (multiColumn || placeholder) {
-      return component;
-    } else {
-      // The portal container and the component may be rendered to the DOM in
-      // the same React render pass, so the container might not be available at
-      // the time `render()` is called.
-      const container = document.getElementById('tabs-bar__portal');
-      if (container === null) {
-        // The container wasn't available, force a re-render so that the
-        // component can eventually be inserted in the container and not scroll
-        // with the rest of the area.
-        this.forceUpdate();
-        return component;
-      } else {
-        return createPortal(component, container);
-      }
-    }
   }
 
 }

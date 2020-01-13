@@ -25,7 +25,7 @@ class Api::V1::Accounts::CredentialsController < Api::BaseController
   end
 
   def user_settings_params
-    return nil if params[:source].blank?
+    return nil unless params.key?(:source)
 
     source_params = params.require(:source)
 

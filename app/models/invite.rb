@@ -12,7 +12,6 @@
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #  autofollow :boolean          default(FALSE), not null
-#  comment    :text
 #
 
 class Invite < ApplicationRecord
@@ -22,8 +21,6 @@ class Invite < ApplicationRecord
   has_many :users, inverse_of: :invite
 
   scope :available, -> { where(expires_at: nil).or(where('expires_at >= ?', Time.now.utc)) }
-
-  validates :comment, length: { maximum: 420 }
 
   before_validation :set_code
 

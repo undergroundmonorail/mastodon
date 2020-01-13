@@ -18,8 +18,6 @@ RSpec.describe Remotable do
 
     def hoge=(arg); end
 
-    def hoge_file_name; end
-
     def hoge_file_name=(arg); end
 
     def has_attribute?(arg); end
@@ -111,20 +109,11 @@ RSpec.describe Remotable do
       end
 
       context 'foo[attribute_name] == url' do
-        it 'makes no request if file is saved' do
+        it 'makes no request' do
           allow(foo).to receive(:[]).with(attribute_name).and_return(url)
-          allow(foo).to receive(:hoge_file_name).and_return('foo.jpg')
 
           foo.hoge_remote_url = url
           expect(request).not_to have_been_requested
-        end
-
-        it 'makes request if file is not saved' do
-          allow(foo).to receive(:[]).with(attribute_name).and_return(url)
-          allow(foo).to receive(:hoge_file_name).and_return(nil)
-
-          foo.hoge_remote_url = url
-          expect(request).to have_been_requested
         end
       end
 

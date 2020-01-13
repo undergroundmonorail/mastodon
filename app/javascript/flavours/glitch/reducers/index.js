@@ -16,7 +16,6 @@ import local_settings from './local_settings';
 import push_notifications from './push_notifications';
 import status_lists from './status_lists';
 import mutes from './mutes';
-import blocks from './blocks';
 import reports from './reports';
 import contexts from './contexts';
 import compose from './compose';
@@ -34,7 +33,6 @@ import suggestions from './suggestions';
 import pinnedAccountsEditor from './pinned_accounts_editor';
 import polls from './polls';
 import identity_proofs from './identity_proofs';
-import trends from './trends';
 
 const reducers = {
   dropdown_menu,
@@ -54,7 +52,6 @@ const reducers = {
   local_settings,
   push_notifications,
   mutes,
-  blocks,
   reports,
   contexts,
   compose,
@@ -72,7 +69,6 @@ const reducers = {
   suggestions,
   pinnedAccountsEditor,
   polls,
-  trends,
 };
 
 export default combineReducers(reducers);

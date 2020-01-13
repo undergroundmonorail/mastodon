@@ -6,9 +6,6 @@ class Settings::ExportsController < Settings::BaseController
   layout 'admin'
 
   before_action :authenticate_user!
-  before_action :require_not_suspended!
-
-  skip_before_action :require_functional!
 
   def show
     @export  = Export.new(current_account)
@@ -36,9 +33,5 @@ class Settings::ExportsController < Settings::BaseController
 
   def lock_options
     { redis: Redis.current, key: "backup:#{current_user.id}" }
-  end
-
-  def require_not_suspended!
-    forbidden if current_account.suspended?
   end
 end

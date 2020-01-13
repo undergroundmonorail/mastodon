@@ -1,14 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { injectIntl, defineMessages } from 'react-intl';
-import Icon from 'flavours/glitch/components/icon';
 
 const messages = defineMessages({
   load_more: { id: 'status.load_more', defaultMessage: 'Load more' },
 });
 
-export default @injectIntl
-class LoadGap extends React.PureComponent {
+@injectIntl
+export default class LoadGap extends React.PureComponent {
 
   static propTypes = {
     disabled: PropTypes.bool,
@@ -26,7 +25,7 @@ class LoadGap extends React.PureComponent {
 
     return (
       <button className='load-more load-gap' disabled={disabled} onClick={this.handleClick} aria-label={intl.formatMessage(messages.load_more)}>
-        <Icon id='ellipsis-h' />
+        <i className='fa fa-ellipsis-h' />
       </button>
     );
   }

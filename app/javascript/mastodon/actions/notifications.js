@@ -14,7 +14,6 @@ import { unescapeHTML } from '../utils/html';
 import { getFiltersRegex } from '../selectors';
 import { usePendingItems as preferPendingItems } from 'mastodon/initial_state';
 import compareId from 'mastodon/compare_id';
-import { searchTextFromRawStatus } from 'mastodon/actions/importer/normalizer';
 
 export const NOTIFICATIONS_UPDATE      = 'NOTIFICATIONS_UPDATE';
 export const NOTIFICATIONS_UPDATE_NOOP = 'NOTIFICATIONS_UPDATE_NOOP';
@@ -28,9 +27,6 @@ export const NOTIFICATIONS_FILTER_SET = 'NOTIFICATIONS_FILTER_SET';
 export const NOTIFICATIONS_CLEAR        = 'NOTIFICATIONS_CLEAR';
 export const NOTIFICATIONS_SCROLL_TOP   = 'NOTIFICATIONS_SCROLL_TOP';
 export const NOTIFICATIONS_LOAD_PENDING = 'NOTIFICATIONS_LOAD_PENDING';
-
-export const NOTIFICATIONS_MOUNT   = 'NOTIFICATIONS_MOUNT';
-export const NOTIFICATIONS_UNMOUNT = 'NOTIFICATIONS_UNMOUNT';
 
 defineMessages({
   mention: { id: 'notification.mention', defaultMessage: '{name} mentioned you' },
@@ -61,7 +57,7 @@ export function updateNotifications(notification, intlMessages, intlLocale) {
     if (notification.type === 'mention') {
       const dropRegex   = filters[0];
       const regex       = filters[1];
-      const searchIndex = searchTextFromRawStatus(notification.status);
+      const searchIndex = notification.status.spoiler_text + '\n' + unescapeHTML(notification.status.content);
 
       if (dropRegex && dropRegex.test(searchIndex)) {
         return;
@@ -110,7 +106,7 @@ export function updateNotifications(notification, intlMessages, intlLocale) {
 const excludeTypesFromSettings = state => state.getIn(['settings', 'notifications', 'shows']).filter(enabled => !enabled).keySeq().toJS();
 
 const excludeTypesFromFilter = filter => {
-  const allTypes = ImmutableList(['follow', 'follow_request', 'favourite', 'reblog', 'mention', 'poll']);
+  const allTypes = ImmutableList(['follow', 'favourite', 'reblog', 'mention', 'poll']);
   return allTypes.filterNot(item => item === filter).toJS();
 };
 
@@ -155,7 +151,7 @@ export function expandNotifications({ maxId } = {}, done = noOp) {
       dispatch(importFetchedAccounts(response.data.map(item => item.account)));
       dispatch(importFetchedStatuses(response.data.map(item => item.status).filter(status => !!status)));
 
-      dispatch(expandNotificationsSuccess(response.data, next ? next.uri : null, isLoadingMore, isLoadingRecent, isLoadingRecent && preferPendingItems));
+      dispatch(expandNotificationsSuccess(response.data, next ? next.uri : null, isLoadingMore, isLoadingRecent && preferPendingItems));
       fetchRelatedRelationships(dispatch, response.data);
       done();
     }).catch(error => {
@@ -172,12 +168,11 @@ export function expandNotificationsRequest(isLoadingMore) {
   };
 };
 
-export function expandNotificationsSuccess(notifications, next, isLoadingMore, isLoadingRecent, usePendingItems) {
+export function expandNotificationsSuccess(notifications, next, isLoadingMore, usePendingItems) {
   return {
     type: NOTIFICATIONS_EXPAND_SUCCESS,
     notifications,
     next,
-    isLoadingRecent: isLoadingRecent,
     usePendingItems,
     skipLoading: !isLoadingMore,
   };
@@ -219,11 +214,3 @@ export function setFilter (filterType) {
     dispatch(saveSettings());
   };
 };
-
-export const mountNotifications = () => ({
-  type: NOTIFICATIONS_MOUNT,
-});
-
-export const unmountNotifications = () => ({
-  type: NOTIFICATIONS_UNMOUNT,
-});

@@ -4,7 +4,7 @@ module Remotable
   extend ActiveSupport::Concern
 
   class_methods do
-    def remotable_attachment(attachment_name, limit, suppress_errors: true)
+    def remotable_attachment(attachment_name, limit)
       attribute_name  = "#{attachment_name}_remote_url".to_sym
       method_name     = "#{attribute_name}=".to_sym
       alt_method_name = "reset_#{attachment_name}!".to_sym
@@ -18,11 +18,11 @@ module Remotable
           return
         end
 
-        return if !%w(http https).include?(parsed_url.scheme) || parsed_url.host.blank? || (self[attribute_name] == url && send("#{attachment_name}_file_name").present?)
+        return if !%w(http https).include?(parsed_url.scheme) || parsed_url.host.blank? || self[attribute_name] == url
 
         begin
           Request.new(:get, url).perform do |response|
-            raise Mastodon::UnexpectedResponseError, response unless (200...300).cover?(response.code)
+            next if response.code != 200
 
             content_type = parse_content_type(response.headers.get('content-type').last)
             extname      = detect_extname_from_content_type(content_type)
@@ -41,11 +41,11 @@ module Remotable
 
             self[attribute_name] = url if has_attribute?(attribute_name)
           end
-        rescue Mastodon::UnexpectedResponseError, HTTP::TimeoutError, HTTP::ConnectionError, OpenSSL::SSL::SSLError => e
+        rescue HTTP::TimeoutError, HTTP::ConnectionError, OpenSSL::SSL::SSLError, Paperclip::Errors::NotIdentifiedByImageMagickError, Addressable::URI::InvalidURIError, Mastodon::HostValidationError, Mastodon::LengthValidationError => e
           Rails.logger.debug "Error fetching remote #{attachment_name}: #{e}"
-          raise e unless suppress_errors
-        rescue Paperclip::Errors::NotIdentifiedByImageMagickError, Addressable::URI::InvalidURIError, Mastodon::HostValidationError, Mastodon::LengthValidationError, Paperclip::Error, Mastodon::DimensionsValidationError => e
-          Rails.logger.debug "Error fetching remote #{attachment_name}: #{e}"
+          nil
+        rescue Paperclip::Error, Mastodon::DimensionsValidationError => e
+          Rails.logger.debug "Error processing remote #{attachment_name}: #{e}"
           nil
         end
       end

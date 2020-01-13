@@ -44,10 +44,6 @@ describe Api::V1::Timelines::PublicController do
   context 'without a user context' do
     let(:token) { Fabricate(:accessible_access_token, resource_owner_id: nil) }
 
-    before do
-      Setting.timeline_preview = true
-    end
-
     describe 'GET #show' do
       it 'returns http success' do
         get :show

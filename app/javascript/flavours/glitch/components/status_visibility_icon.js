@@ -3,7 +3,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { defineMessages, injectIntl } from 'react-intl';
 import ImmutablePureComponent from 'react-immutable-pure-component';
-import Icon from 'flavours/glitch/components/icon';
 
 const messages = defineMessages({
   public: { id: 'privacy.public.short', defaultMessage: 'Public' },
@@ -12,8 +11,8 @@ const messages = defineMessages({
   direct: { id: 'privacy.direct.short', defaultMessage: 'Direct' },
 });
 
-export default @injectIntl
-class VisibilityIcon extends ImmutablePureComponent {
+@injectIntl
+export default class VisibilityIcon extends ImmutablePureComponent {
 
   static propTypes = {
     visibility: PropTypes.string,
@@ -24,7 +23,7 @@ class VisibilityIcon extends ImmutablePureComponent {
   render() {
     const { withLabel, visibility, intl } = this.props;
 
-    const visibilityIcon = {
+    const visibilityClass = {
       public: 'globe',
       unlisted: 'unlock',
       private: 'lock',
@@ -33,10 +32,8 @@ class VisibilityIcon extends ImmutablePureComponent {
 
     const label = intl.formatMessage(messages[visibility]);
 
-    const icon = (<Icon
-      className='status__visibility-icon'
-      fixedWidth
-      id={visibilityIcon}
+    const icon = (<i
+      className={`status__visibility-icon fa fa-fw fa-${visibilityClass}`}
       title={label}
       aria-hidden='true'
     />);

@@ -31,16 +31,15 @@ const mapStateToProps = state => ({
   lists: getOrderedLists(state),
 });
 
-export default @connect(mapStateToProps)
+@connect(mapStateToProps)
 @injectIntl
-class Lists extends ImmutablePureComponent {
+export default class Lists extends ImmutablePureComponent {
 
   static propTypes = {
     params: PropTypes.object.isRequired,
     dispatch: PropTypes.func.isRequired,
     lists: ImmutablePropTypes.list,
     intl: PropTypes.object.isRequired,
-    multiColumn: PropTypes.bool,
   };
 
   componentWillMount () {
@@ -48,7 +47,7 @@ class Lists extends ImmutablePureComponent {
   }
 
   render () {
-    const { intl, lists, multiColumn } = this.props;
+    const { intl, lists } = this.props;
 
     if (!lists) {
       return (
@@ -61,7 +60,7 @@ class Lists extends ImmutablePureComponent {
     const emptyMessage = <FormattedMessage id='empty_column.lists' defaultMessage="You don't have any lists yet. When you create one, it will show up here." />;
 
     return (
-      <Column bindToDocument={!multiColumn} icon='bars' heading={intl.formatMessage(messages.heading)}>
+      <Column icon='bars' heading={intl.formatMessage(messages.heading)}>
         <ColumnBackButtonSlim />
 
         <NewListForm />
@@ -70,7 +69,6 @@ class Lists extends ImmutablePureComponent {
         <ScrollableList
           scrollKey='lists'
           emptyMessage={emptyMessage}
-          bindToDocument={!multiColumn}
         >
           {lists.map(list =>
             <ColumnLink key={list.get('id')} to={`/timelines/list/${list.get('id')}`} icon='list-ul' text={list.get('title')} />

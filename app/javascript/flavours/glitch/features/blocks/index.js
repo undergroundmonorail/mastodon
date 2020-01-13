@@ -21,9 +21,9 @@ const mapStateToProps = state => ({
   hasMore: !!state.getIn(['user_lists', 'blocks', 'next']),
 });
 
-export default @connect(mapStateToProps)
+@connect(mapStateToProps)
 @injectIntl
-class Blocks extends ImmutablePureComponent {
+export default class Blocks extends ImmutablePureComponent {
 
   static propTypes = {
     params: PropTypes.object.isRequired,
@@ -31,7 +31,6 @@ class Blocks extends ImmutablePureComponent {
     accountIds: ImmutablePropTypes.list,
     hasMore: PropTypes.bool,
     intl: PropTypes.object.isRequired,
-    multiColumn: PropTypes.bool,
   };
 
   componentWillMount () {
@@ -43,7 +42,7 @@ class Blocks extends ImmutablePureComponent {
   }, 300, { leading: true });
 
   render () {
-    const { intl, accountIds, hasMore, multiColumn } = this.props;
+    const { intl, accountIds, hasMore } = this.props;
 
     if (!accountIds) {
       return (
@@ -56,14 +55,13 @@ class Blocks extends ImmutablePureComponent {
     const emptyMessage = <FormattedMessage id='empty_column.blocks' defaultMessage="You haven't blocked any users yet." />;
 
     return (
-      <Column name='blocks' bindToDocument={!multiColumn} icon='ban' heading={intl.formatMessage(messages.heading)}>
+      <Column name='blocks' icon='ban' heading={intl.formatMessage(messages.heading)}>
         <ColumnBackButtonSlim />
         <ScrollableList
           scrollKey='blocks'
           onLoadMore={this.handleLoadMore}
           hasMore={hasMore}
           emptyMessage={emptyMessage}
-          bindToDocument={!multiColumn}
         >
           {accountIds.map(id =>
             <AccountContainer key={id} id={id} />

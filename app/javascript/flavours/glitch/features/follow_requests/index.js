@@ -21,9 +21,9 @@ const mapStateToProps = state => ({
   hasMore: !!state.getIn(['user_lists', 'follow_requests', 'next']),
 });
 
-export default @connect(mapStateToProps)
+@connect(mapStateToProps)
 @injectIntl
-class FollowRequests extends ImmutablePureComponent {
+export default class FollowRequests extends ImmutablePureComponent {
 
   static propTypes = {
     params: PropTypes.object.isRequired,
@@ -31,7 +31,6 @@ class FollowRequests extends ImmutablePureComponent {
     hasMore: PropTypes.bool,
     accountIds: ImmutablePropTypes.list,
     intl: PropTypes.object.isRequired,
-    multiColumn: PropTypes.bool,
   };
 
   componentWillMount () {
@@ -43,7 +42,7 @@ class FollowRequests extends ImmutablePureComponent {
   }, 300, { leading: true });
 
   render () {
-    const { intl, accountIds, hasMore, multiColumn } = this.props;
+    const { intl, accountIds, hasMore } = this.props;
 
     if (!accountIds) {
       return (
@@ -56,7 +55,7 @@ class FollowRequests extends ImmutablePureComponent {
     const emptyMessage = <FormattedMessage id='empty_column.follow_requests' defaultMessage="You don't have any follow requests yet. When you receive one, it will show up here." />;
 
     return (
-      <Column bindToDocument={!multiColumn} name='follow-requests' icon='user-plus' heading={intl.formatMessage(messages.heading)}>
+      <Column name='follow-requests' icon='user-plus' heading={intl.formatMessage(messages.heading)}>
         <ColumnBackButtonSlim />
 
         <ScrollableList
@@ -64,7 +63,6 @@ class FollowRequests extends ImmutablePureComponent {
           onLoadMore={this.handleLoadMore}
           hasMore={hasMore}
           emptyMessage={emptyMessage}
-          bindToDocument={!multiColumn}
         >
           {accountIds.map(id =>
             <AccountAuthorizeContainer key={id} id={id} />

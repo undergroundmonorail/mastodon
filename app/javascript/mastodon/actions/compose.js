@@ -205,11 +205,10 @@ export function uploadCompose(files) {
   return function (dispatch, getState) {
     const uploadLimit = 4;
     const media  = getState().getIn(['compose', 'media_attachments']);
-    const pending  = getState().getIn(['compose', 'pending_media_attachments']);
     const progress = new Array(files.length).fill(0);
     let total = Array.from(files).reduce((a, v) => a + v.size, 0);
 
-    if (files.length + media.size + pending > uploadLimit) {
+    if (files.length + media.size > uploadLimit) {
       dispatch(showAlert(undefined, messages.uploadErrorLimit));
       return;
     }
@@ -235,7 +234,7 @@ export function uploadCompose(files) {
             progress[i] = loaded;
             dispatch(uploadComposeProgress(progress.reduce((a, v) => a + v, 0), total));
           },
-        }).then(({ data }) => dispatch(uploadComposeSuccess(data, f)));
+        }).then(({ data }) => dispatch(uploadComposeSuccess(data)));
       }).catch(error => dispatch(uploadComposeFail(error)));
     };
   };
@@ -290,11 +289,10 @@ export function uploadComposeProgress(loaded, total) {
   };
 };
 
-export function uploadComposeSuccess(media, file) {
+export function uploadComposeSuccess(media) {
   return {
     type: COMPOSE_UPLOAD_SUCCESS,
     media: media,
-    file: file,
     skipLoading: true,
   };
 };
@@ -358,8 +356,6 @@ const fetchComposeSuggestionsTags = throttle((dispatch, getState, token) => {
     cancelFetchComposeSuggestionsTags();
   }
 
-  dispatch(updateSuggestionTags(token));
-
   api(getState).get('/api/v2/search', {
     cancelToken: new CancelToken(cancel => {
       cancelFetchComposeSuggestionsTags = cancel;
@@ -370,7 +366,6 @@ const fetchComposeSuggestionsTags = throttle((dispatch, getState, token) => {
       q: token.slice(1),
       resolve: false,
       limit: 4,
-      exclude_unreviewed: true,
     },
   }).then(({ data }) => {
     dispatch(readyComposeSuggestionsTags(token, data.hashtags));

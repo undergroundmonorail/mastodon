@@ -5,7 +5,6 @@ module Settings
     DEFAULTING_TO_UNSCOPED = %w(
       flavour
       skin
-      noindex
     ).freeze
 
     def initialize(object)

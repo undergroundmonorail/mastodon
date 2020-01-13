@@ -20,8 +20,6 @@ import {
 import {
   ACCOUNT_BLOCK_SUCCESS,
   ACCOUNT_MUTE_SUCCESS,
-  FOLLOW_REQUEST_AUTHORIZE_SUCCESS,
-  FOLLOW_REQUEST_REJECT_SUCCESS,
 } from 'flavours/glitch/actions/accounts';
 import { DOMAIN_BLOCK_SUCCESS } from 'flavours/glitch/actions/domain_blocks';
 import { TIMELINE_DELETE, TIMELINE_DISCONNECT } from 'flavours/glitch/actions/timelines';
@@ -52,11 +50,11 @@ const notificationToMap = (state, notification) => ImmutableMap({
 });
 
 const normalizeNotification = (state, notification, usePendingItems) => {
-  const top = !shouldCountUnreadNotifications(state);
-
-  if (usePendingItems || !state.get('pendingItems').isEmpty()) {
-    return state.update('pendingItems', list => list.unshift(notificationToMap(state, notification))).update('unread', unread => unread + 1);
+  if (usePendingItems) {
+    return state.update('pendingItems', list => list.unshift(notificationToMap(state, notification)));
   }
+
+  const top = !shouldCountUnreadNotifications(state);
 
   if (top) {
     state = state.set('lastReadId', notification.id);
@@ -73,7 +71,7 @@ const normalizeNotification = (state, notification, usePendingItems) => {
   });
 };
 
-const expandNormalizedNotifications = (state, notifications, next, isLoadingRecent, usePendingItems) => {
+const expandNormalizedNotifications = (state, notifications, next, usePendingItems) => {
   const top = !(shouldCountUnreadNotifications(state));
   const lastReadId = state.get('lastReadId');
   let items = ImmutableList();
@@ -84,8 +82,6 @@ const expandNormalizedNotifications = (state, notifications, next, isLoadingRece
 
   return state.withMutations(mutable => {
     if (!items.isEmpty()) {
-      usePendingItems = isLoadingRecent && (usePendingItems || !mutable.get('pendingItems').isEmpty());
-
       mutable.update(usePendingItems ? 'pendingItems' : 'items', list => {
         const lastIndex = 1 + list.findLastIndex(
           item => item !== null && (compareId(item.get('id'), items.last().get('id')) > 0 || item.get('id') === items.last().get('id'))
@@ -115,13 +111,13 @@ const expandNormalizedNotifications = (state, notifications, next, isLoadingRece
   });
 };
 
-const filterNotifications = (state, accountIds, type) => {
-  const helper = list => list.filterNot(item => item !== null && accountIds.includes(item.get('account')) && (type === undefined || type === item.get('type')));
+const filterNotifications = (state, accountIds) => {
+  const helper = list => list.filterNot(item => item !== null && accountIds.includes(item.get('account')));
   return state.update('items', helper).update('pendingItems', helper);
 };
 
 const clearUnread = (state) => {
-  state = state.set('unread', state.get('pendingItems').size);
+  state = state.set('unread', 0);
   const lastNotification = state.get('items').find(item => item !== null);
   return state.set('lastReadId', lastNotification ? lastNotification.get('id') : '0');
 }
@@ -144,8 +140,6 @@ const deleteByStatus = (state, statusId) => {
     state = state.update('unread', unread => unread - deletedUnread.size);
   }
   const helper = list => list.filterNot(item => item !== null && item.get('status') === statusId);
-  const deletedUnread = state.get('pendingItems').filter(item => item !== null && item.get('status') === statusId && compareId(item.get('id'), lastReadId) > 0);
-  state = state.update('unread', unread => unread - deletedUnread.size);
   return state.update('items', helper).update('pendingItems', helper);
 };
 
@@ -222,18 +216,13 @@ export default function notifications(state = initialState, action) {
   case NOTIFICATIONS_UPDATE:
     return normalizeNotification(state, action.notification, action.usePendingItems);
   case NOTIFICATIONS_EXPAND_SUCCESS:
-    return expandNormalizedNotifications(state, action.notifications, action.next, action.isLoadingRecent, action.usePendingItems);
+    return expandNormalizedNotifications(state, action.notifications, action.next, action.usePendingItems);
   case ACCOUNT_BLOCK_SUCCESS:
     return filterNotifications(state, [action.relationship.id]);
   case ACCOUNT_MUTE_SUCCESS:
     return action.relationship.muting_notifications ? filterNotifications(state, [action.relationship.id]) : state;
   case DOMAIN_BLOCK_SUCCESS:
     return filterNotifications(state, action.accounts);
-  case FOLLOW_REQUEST_AUTHORIZE_SUCCESS:
-  case FOLLOW_REQUEST_REJECT_SUCCESS:
-    return filterNotifications(state, [action.id], 'follow_request');
-  case ACCOUNT_MUTE_SUCCESS:
-    return action.relationship.muting_notifications ? filterNotifications(state, [action.relationship.id]) : state;
   case NOTIFICATIONS_CLEAR:
     return state.set('items', ImmutableList()).set('pendingItems', ImmutableList()).set('hasMore', false);
   case TIMELINE_DELETE:

@@ -6,12 +6,9 @@ class UnfollowService < BaseService
   # Unfollow and notify the remote user
   # @param [Account] source_account Where to unfollow from
   # @param [Account] target_account Which to unfollow
-  # @param [Hash] options
-  # @option [Boolean] :skip_unmerge
-  def call(source_account, target_account, options = {})
+  def call(source_account, target_account)
     @source_account = source_account
     @target_account = target_account
-    @options        = options
 
     unfollow! || undo_follow_request!
   end
@@ -24,11 +21,9 @@ class UnfollowService < BaseService
     return unless follow
 
     follow.destroy!
-
     create_notification(follow) if !@target_account.local? && @target_account.activitypub?
     create_reject_notification(follow) if @target_account.local? && !@source_account.local? && @source_account.activitypub?
-    UnmergeWorker.perform_async(@target_account.id, @source_account.id) unless @options[:skip_unmerge]
-
+    UnmergeWorker.perform_async(@target_account.id, @source_account.id)
     follow
   end
 
@@ -38,9 +33,7 @@ class UnfollowService < BaseService
     return unless follow_request
 
     follow_request.destroy!
-
     create_notification(follow_request) unless @target_account.local?
-
     follow_request
   end
 

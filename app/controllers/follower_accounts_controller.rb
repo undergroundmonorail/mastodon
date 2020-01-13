@@ -7,9 +7,6 @@ class FollowerAccountsController < ApplicationController
   before_action :require_signature!, if: -> { request.format == :json && authorized_fetch_mode? }
   before_action :set_cache_headers
 
-  skip_around_action :set_locale, if: -> { request.format == :json }
-  skip_before_action :require_functional!
-
   def index
     respond_to do |format|
       format.html do
@@ -19,6 +16,7 @@ class FollowerAccountsController < ApplicationController
         next if @account.user_hides_network?
 
         follows
+        @relationships = AccountRelationshipsPresenter.new(follows.map(&:account_id), current_user.account_id) if user_signed_in?
       end
 
       format.json do
@@ -37,11 +35,7 @@ class FollowerAccountsController < ApplicationController
   private
 
   def follows
-    return @follows if defined?(@follows)
-
-    scope = Follow.where(target_account: @account)
-    scope = scope.where.not(account_id: current_account.excluded_from_timeline_account_ids) if user_signed_in?
-    @follows = scope.recent.page(params[:page]).per(FOLLOW_PER_PAGE).preload(:account)
+    @follows ||= Follow.where(target_account: @account).recent.page(params[:page]).per(FOLLOW_PER_PAGE).preload(:account)
   end
 
   def page_requested?

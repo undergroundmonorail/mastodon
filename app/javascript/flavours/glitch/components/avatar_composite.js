@@ -35,35 +35,35 @@ export default class AvatarComposite extends React.PureComponent {
 
     if (size === 2) {
       if (index === 0) {
-        right = '1px';
+        right = '2px';
       } else {
-        left = '1px';
+        left = '2px';
       }
     } else if (size === 3) {
       if (index === 0) {
-        right = '1px';
+        right = '2px';
       } else if (index > 0) {
-        left = '1px';
+        left = '2px';
       }
 
       if (index === 1) {
-        bottom = '1px';
+        bottom = '2px';
       } else if (index > 1) {
-        top = '1px';
+        top = '2px';
       }
     } else if (size === 4) {
       if (index === 0 || index === 2) {
-        right = '1px';
+        right = '2px';
       }
 
       if (index === 1 || index === 3) {
-        left = '1px';
+        left = '2px';
       }
 
       if (index < 2) {
-        bottom = '1px';
+        bottom = '2px';
       } else {
-        top = '1px';
+        top = '2px';
       }
     }
 
@@ -96,13 +96,7 @@ export default class AvatarComposite extends React.PureComponent {
 
     return (
       <div className='account__avatar-composite' style={{ width: `${size}px`, height: `${size}px` }}>
-        {accounts.take(4).map((account, i) => this.renderItem(account, Math.min(accounts.size, 4), i))}
-
-        {accounts.size > 4 && (
-          <span className='account__avatar-composite__label'>
-            +{accounts.size - 4}
-          </span>
-        )}
+        {accounts.take(4).map((account, i) => this.renderItem(account, accounts.size, i))}
       </div>
     );
   }

@@ -1,4 +1,4 @@
-import WebSocketClient from '@gamestdio/websocket';
+import WebSocketClient from 'websocket.js';
 
 const randomIntUpTo = max => Math.floor(Math.random() * Math.floor(max));
 

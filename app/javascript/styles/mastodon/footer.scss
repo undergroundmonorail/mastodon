@@ -128,7 +128,7 @@
       &:hover,
       &:focus,
       &:active {
-        svg {
+        svg path {
           fill: lighten($ui-base-color, 38%);
         }
       }

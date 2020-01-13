@@ -10,4 +10,4 @@ fi:
         account:
           attributes:
             username:
-              invalid: vain kirjaimia, numeroita ja alaviivoja
+              invalid: Vain kirjaimia, numeroita ja alleviivoja

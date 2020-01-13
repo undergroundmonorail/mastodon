@@ -10,7 +10,6 @@ import { HotKeys } from 'react-hotkeys';
 import Permalink from 'flavours/glitch/components/permalink';
 import AccountContainer from 'flavours/glitch/containers/account_container';
 import NotificationOverlayContainer from '../containers/overlay_container';
-import Icon from 'flavours/glitch/components/icon';
 
 export default class NotificationFollow extends ImmutablePureComponent {
 
@@ -79,7 +78,7 @@ export default class NotificationFollow extends ImmutablePureComponent {
         <div className='notification notification-follow focusable' tabIndex='0'>
           <div className='notification__message'>
             <div className='notification__favourite-icon-wrapper'>
-              <Icon fixedWidth id='user-plus' />
+              <i className='fa fa-fw fa-user-plus' />
             </div>
 
             <FormattedMessage

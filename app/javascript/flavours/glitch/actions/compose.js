@@ -12,7 +12,7 @@ import { showAlertForError } from './alerts';
 import { showAlert } from './alerts';
 import { defineMessages } from 'react-intl';
 
-let cancelFetchComposeSuggestionsAccounts, cancelFetchComposeSuggestionsTags;
+let cancelFetchComposeSuggestionsAccounts;
 
 export const COMPOSE_CHANGE          = 'COMPOSE_CHANGE';
 export const COMPOSE_CYCLE_ELEFRIEND = 'COMPOSE_CYCLE_ELEFRIEND';
@@ -232,11 +232,10 @@ export function uploadCompose(files) {
   return function (dispatch, getState) {
     const uploadLimit = 4;
     const media  = getState().getIn(['compose', 'media_attachments']);
-    const pending  = getState().getIn(['compose', 'pending_media_attachments']);
     const progress = new Array(files.length).fill(0);
     let total = Array.from(files).reduce((a, v) => a + v.size, 0);
 
-    if (files.length + media.size + pending > uploadLimit) {
+    if (files.length + media.size > uploadLimit) {
       dispatch(showAlert(undefined, messages.uploadErrorLimit));
       return;
     }
@@ -262,7 +261,7 @@ export function uploadCompose(files) {
             progress[i] = loaded;
             dispatch(uploadComposeProgress(progress.reduce((a, v) => a + v, 0), total));
           },
-        }).then(({ data }) => dispatch(uploadComposeSuccess(data, f)));
+        }).then(({ data }) => dispatch(uploadComposeSuccess(data)));
       }).catch(error => dispatch(uploadComposeFail(error)));
     };
   };
@@ -317,11 +316,10 @@ export function uploadComposeProgress(loaded, total) {
   };
 };
 
-export function uploadComposeSuccess(media, file) {
+export function uploadComposeSuccess(media) {
   return {
     type: COMPOSE_UPLOAD_SUCCESS,
     media: media,
-    file: file,
     skipLoading: true,
   };
 };
@@ -354,12 +352,10 @@ const fetchComposeSuggestionsAccounts = throttle((dispatch, getState, token) => 
   if (cancelFetchComposeSuggestionsAccounts) {
     cancelFetchComposeSuggestionsAccounts();
   }
-
   api(getState).get('/api/v1/accounts/search', {
     cancelToken: new CancelToken(cancel => {
       cancelFetchComposeSuggestionsAccounts = cancel;
     }),
-
     params: {
       q: token.slice(1),
       resolve: false,
@@ -380,32 +376,9 @@ const fetchComposeSuggestionsEmojis = (dispatch, getState, token) => {
   dispatch(readyComposeSuggestionsEmojis(token, results));
 };
 
-const fetchComposeSuggestionsTags = throttle((dispatch, getState, token) => {
-  if (cancelFetchComposeSuggestionsTags) {
-    cancelFetchComposeSuggestionsTags();
-  }
-
+const fetchComposeSuggestionsTags = (dispatch, getState, token) => {
   dispatch(updateSuggestionTags(token));
-
-  api(getState).get('/api/v2/search', {
-    cancelToken: new CancelToken(cancel => {
-      cancelFetchComposeSuggestionsTags = cancel;
-    }),
-
-    params: {
-      type: 'hashtags',
-      q: token.slice(1),
-      resolve: false,
-      limit: 4,
-    },
-  }).then(({ data }) => {
-    dispatch(readyComposeSuggestionsTags(token, data.hashtags));
-  }).catch(error => {
-    if (!isCancel(error)) {
-      dispatch(showAlertForError(error));
-    }
-  });
-}, 200, { leading: true, trailing: true });
+};
 
 export function fetchComposeSuggestions(token) {
   return (dispatch, getState) => {
@@ -439,22 +412,16 @@ export function readyComposeSuggestionsAccounts(token, accounts) {
   };
 };
 
-export const readyComposeSuggestionsTags = (token, tags) => ({
-  type: COMPOSE_SUGGESTIONS_READY,
-  token,
-  tags,
-});
-
 export function selectComposeSuggestion(position, token, suggestion, path) {
   return (dispatch, getState) => {
     let completion;
-    if (suggestion.type === 'emoji') {
+    if (typeof suggestion === 'object' && suggestion.id) {
       dispatch(useEmoji(suggestion));
       completion = suggestion.native || suggestion.colons;
-    } else if (suggestion.type === 'hashtag') {
-      completion = `#${suggestion.name}`;
-    } else if (suggestion.type === 'account') {
-      completion = '@' + getState().getIn(['accounts', suggestion.id, 'acct']);
+    } else if (suggestion[0] === '#') {
+      completion = suggestion;
+    } else {
+      completion = '@' + getState().getIn(['accounts', suggestion, 'acct']);
     }
 
     dispatch({

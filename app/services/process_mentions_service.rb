@@ -14,16 +14,7 @@ class ProcessMentionsService < BaseService
     mentions = []
 
     status.text = status.text.gsub(Account::MENTION_RE) do |match|
-      username, domain = Regexp.last_match(1).split('@')
-
-      domain = begin
-        if TagManager.instance.local_domain?(domain)
-          nil
-        else
-          TagManager.instance.normalize_domain(domain)
-        end
-      end
-
+      username, domain  = Regexp.last_match(1).split('@')
       mentioned_account = Account.find_remote(username, domain)
 
       if mention_undeliverable?(mentioned_account)
@@ -42,7 +33,6 @@ class ProcessMentionsService < BaseService
     end
 
     status.save!
-    check_for_spam(status)
 
     mentions.each { |mention| create_notification(mention) }
   end
@@ -70,9 +60,5 @@ class ProcessMentionsService < BaseService
 
   def resolve_account_service
     ResolveAccountService.new
-  end
-
-  def check_for_spam(status)
-    SpamCheck.perform(status)
   end
 end

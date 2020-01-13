@@ -13,7 +13,6 @@ import { fetchList, deleteList, updateList } from 'flavours/glitch/actions/lists
 import { openModal } from 'flavours/glitch/actions/modal';
 import MissingIndicator from 'flavours/glitch/components/missing_indicator';
 import LoadingIndicator from 'flavours/glitch/components/loading_indicator';
-import Icon from 'flavours/glitch/components/icon';
 
 const messages = defineMessages({
   deleteMessage: { id: 'confirmations.delete_list.message', defaultMessage: 'Are you sure you want to permanently delete this list?' },
@@ -28,9 +27,9 @@ const mapStateToProps = (state, props) => ({
   hasUnread: state.getIn(['timelines', `list:${props.params.id}`, 'unread']) > 0,
 });
 
-export default @connect(mapStateToProps)
+@connect(mapStateToProps)
 @injectIntl
-class ListTimeline extends React.PureComponent {
+export default class ListTimeline extends React.PureComponent {
 
   static contextTypes = {
     router: PropTypes.object,
@@ -174,15 +173,14 @@ class ListTimeline extends React.PureComponent {
           onClick={this.handleHeaderClick}
           pinned={pinned}
           multiColumn={multiColumn}
-          bindToDocument={!multiColumn}
         >
           <div className='column-header__links'>
             <button className='text-btn column-header__setting-btn' tabIndex='0' onClick={this.handleEditClick}>
-              <Icon id='pencil' /> <FormattedMessage id='lists.edit' defaultMessage='Edit list' />
+              <i className='fa fa-pencil' /> <FormattedMessage id='lists.edit' defaultMessage='Edit list' />
             </button>
 
             <button className='text-btn column-header__setting-btn' tabIndex='0' onClick={this.handleDeleteClick}>
-              <Icon id='trash' /> <FormattedMessage id='lists.delete' defaultMessage='Delete list' />
+              <i className='fa fa-trash' /> <FormattedMessage id='lists.delete' defaultMessage='Delete list' />
             </button>
           </div>
 
@@ -213,7 +211,6 @@ class ListTimeline extends React.PureComponent {
           timelineId={`list:${id}`}
           onLoadMore={this.handleLoadMore}
           emptyMessage={<FormattedMessage id='empty_column.list' defaultMessage='There is nothing in this list yet.' />}
-          bindToDocument={!multiColumn}
         />
       </Column>
     );

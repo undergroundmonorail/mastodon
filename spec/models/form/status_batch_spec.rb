@@ -41,12 +41,12 @@ describe Form::StatusBatch do
 
     it 'call RemovalWorker' do
       form.save
-      expect(RemovalWorker).to have_received(:perform_async).with(status.id, immediate: true)
+      expect(RemovalWorker).to have_received(:perform_async).with(status.id)
     end
 
     it 'do not call RemovalWorker' do
       form.save
-      expect(RemovalWorker).not_to have_received(:perform_async).with(another_status.id, immediate: true)
+      expect(RemovalWorker).not_to have_received(:perform_async).with(another_status.id)
     end
   end
 end

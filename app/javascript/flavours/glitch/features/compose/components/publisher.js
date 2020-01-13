@@ -50,6 +50,7 @@ class Publisher extends ImmutablePureComponent {
 
     return (
       <div className={computedClass}>
+        <span className='count'>{statusLen}</span>
         {sideArm && sideArm !== 'none' ? (
           <Button
             className='side_arm'
@@ -59,7 +60,7 @@ class Publisher extends ImmutablePureComponent {
             text={
               <span>
                 <Icon
-                  id={{
+                  icon={{
                     public: 'globe',
                     unlisted: 'unlock',
                     private: 'lock',
@@ -81,7 +82,7 @@ class Publisher extends ImmutablePureComponent {
               return (
                 <span>
                   <Icon
-                    id={{
+                    icon={{
                       direct: 'envelope',
                       private: 'lock',
                       public: 'globe',

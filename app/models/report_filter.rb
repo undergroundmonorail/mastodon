@@ -19,8 +19,6 @@ class ReportFilter
 
   def scope_for(key, value)
     case key.to_sym
-    when :by_target_domain
-      Report.where(target_account: Account.where(domain: value))
     when :resolved
       Report.resolved
     when :account_id

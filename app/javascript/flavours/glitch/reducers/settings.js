@@ -15,10 +15,6 @@ const initialState = ImmutableMap({
 
   skinTone: 1,
 
-  trends: ImmutableMap({
-    show: true,
-  }),
-
   home: ImmutableMap({
     shows: ImmutableMap({
       reblog: true,
@@ -34,7 +30,6 @@ const initialState = ImmutableMap({
   notifications: ImmutableMap({
     alerts: ImmutableMap({
       follow: true,
-      follow_request: false,
       favourite: true,
       reblog: true,
       mention: true,
@@ -49,7 +44,6 @@ const initialState = ImmutableMap({
 
     shows: ImmutableMap({
       follow: true,
-      follow_request: false,
       favourite: true,
       reblog: true,
       mention: true,
@@ -58,7 +52,6 @@ const initialState = ImmutableMap({
 
     sounds: ImmutableMap({
       follow: true,
-      follow_request: false,
       favourite: true,
       reblog: true,
       mention: true,

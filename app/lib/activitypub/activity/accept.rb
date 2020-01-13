@@ -2,18 +2,17 @@
 
 class ActivityPub::Activity::Accept < ActivityPub::Activity
   def perform
-    return accept_follow_for_relay if relay_follow?
-    return follow_request_from_object.authorize! unless follow_request_from_object.nil?
-
     case @object['type']
     when 'Follow'
-      accept_embedded_follow
+      accept_follow
     end
   end
 
   private
 
-  def accept_embedded_follow
+  def accept_follow
+    return accept_follow_for_relay if relay_follow?
+
     target_account = account_from_uri(target_uri)
 
     return if target_account.nil? || !target_account.local?

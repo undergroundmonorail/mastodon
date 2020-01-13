@@ -3,15 +3,15 @@ import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
 import Toggle from 'react-toggle';
-import AsyncSelect from 'react-select/async';
+import AsyncSelect from 'react-select/lib/Async';
 
 const messages = defineMessages({
   placeholder: { id: 'hashtag.column_settings.select.placeholder', defaultMessage: 'Enter hashtags…' },
   noOptions: { id: 'hashtag.column_settings.select.no_options_message', defaultMessage: 'No suggestions found' },
 });
 
-export default @injectIntl
-class ColumnSettings extends React.PureComponent {
+@injectIntl
+export default class ColumnSettings extends React.PureComponent {
 
   static propTypes = {
     settings: ImmutablePropTypes.map.isRequired,

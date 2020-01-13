@@ -53,17 +53,7 @@ class Header extends ImmutablePureComponent {
     showNotificationsBadge: PropTypes.bool,
     intl: PropTypes.object,
     onSettingsClick: PropTypes.func,
-    onLogout: PropTypes.func.isRequired,
   };
-
-  handleLogoutClick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    this.props.onLogout();
-
-    return false;
-  }
 
   render () {
     const { intl, columns, unreadNotifications, showNotificationsBadge, onSettingsClick } = this.props;
@@ -82,13 +72,13 @@ class Header extends ImmutablePureComponent {
           aria-label={intl.formatMessage(messages.start)}
           title={intl.formatMessage(messages.start)}
           to='/getting-started'
-        ><Icon id='asterisk' /></Link>
+        ><Icon icon='asterisk' /></Link>
         {renderForColumn('HOME', (
           <Link
             aria-label={intl.formatMessage(messages.home_timeline)}
             title={intl.formatMessage(messages.home_timeline)}
             to='/timelines/home'
-          ><Icon id='home' /></Link>
+          ><Icon icon='home' /></Link>
         ))}
         {renderForColumn('NOTIFICATIONS', (
           <Link
@@ -97,7 +87,7 @@ class Header extends ImmutablePureComponent {
             to='/notifications'
           >
             <span className='icon-badge-wrapper'>
-              <Icon id='bell' />
+              <Icon icon='bell' />
               { showNotificationsBadge && unreadNotifications > 0 && <div className='icon-badge' />}
             </span>
           </Link>
@@ -107,27 +97,27 @@ class Header extends ImmutablePureComponent {
             aria-label={intl.formatMessage(messages.community)}
             title={intl.formatMessage(messages.community)}
             to='/timelines/public/local'
-          ><Icon id='users' /></Link>
+          ><Icon icon='users' /></Link>
         ))}
         {renderForColumn('PUBLIC', (
           <Link
             aria-label={intl.formatMessage(messages.public)}
             title={intl.formatMessage(messages.public)}
             to='/timelines/public'
-          ><Icon id='globe' /></Link>
+          ><Icon icon='globe' /></Link>
         ))}
         <a
           aria-label={intl.formatMessage(messages.settings)}
           onClick={onSettingsClick}
           href='#'
           title={intl.formatMessage(messages.settings)}
-        ><Icon id='cogs' /></a>
+        ><Icon icon='cogs' /></a>
         <a
           aria-label={intl.formatMessage(messages.logout)}
-          onClick={this.handleLogoutClick}
+          data-method='delete'
           href={ signOutLink }
           title={intl.formatMessage(messages.logout)}
-        ><Icon id='sign-out' /></a>
+        ><Icon icon='sign-out' /></a>
       </nav>
     );
   };

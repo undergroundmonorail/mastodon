@@ -18,16 +18,15 @@ const mapStateToProps = state => ({
   hasMore: !!state.getIn(['status_lists', 'pins', 'next']),
 });
 
-export default @connect(mapStateToProps)
+@connect(mapStateToProps)
 @injectIntl
-class PinnedStatuses extends ImmutablePureComponent {
+export default class PinnedStatuses extends ImmutablePureComponent {
 
   static propTypes = {
     dispatch: PropTypes.func.isRequired,
     statusIds: ImmutablePropTypes.list.isRequired,
     intl: PropTypes.object.isRequired,
     hasMore: PropTypes.bool.isRequired,
-    multiColumn: PropTypes.bool,
   };
 
   componentWillMount () {
@@ -43,16 +42,15 @@ class PinnedStatuses extends ImmutablePureComponent {
   }
 
   render () {
-    const { intl, statusIds, hasMore, multiColumn } = this.props;
+    const { intl, statusIds, hasMore } = this.props;
 
     return (
-      <Column bindToDocument={!multiColumn} icon='thumb-tack' heading={intl.formatMessage(messages.heading)} ref={this.setRef}>
+      <Column icon='thumb-tack' heading={intl.formatMessage(messages.heading)} ref={this.setRef}>
         <ColumnBackButtonSlim />
         <StatusList
           statusIds={statusIds}
           scrollKey='pinned_statuses'
           hasMore={hasMore}
-          bindToDocument={!multiColumn}
         />
       </Column>
     );

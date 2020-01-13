@@ -5,23 +5,17 @@ import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import LoadingIndicator from '../../components/loading_indicator';
 import { fetchFavourites } from '../../actions/interactions';
-import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
+import { FormattedMessage } from 'react-intl';
 import AccountContainer from '../../containers/account_container';
 import Column from '../ui/components/column';
+import ColumnBackButton from '../../components/column_back_button';
 import ScrollableList from '../../components/scrollable_list';
-import Icon from 'mastodon/components/icon';
-import ColumnHeader from '../../components/column_header';
-
-const messages = defineMessages({
-  refresh: { id: 'refresh', defaultMessage: 'Refresh' },
-});
 
 const mapStateToProps = (state, props) => ({
   accountIds: state.getIn(['user_lists', 'favourited_by', props.params.statusId]),
 });
 
 export default @connect(mapStateToProps)
-@injectIntl
 class Favourites extends ImmutablePureComponent {
 
   static propTypes = {
@@ -30,13 +24,10 @@ class Favourites extends ImmutablePureComponent {
     shouldUpdateScroll: PropTypes.func,
     accountIds: ImmutablePropTypes.list,
     multiColumn: PropTypes.bool,
-    intl: PropTypes.object.isRequired,
   };
 
   componentWillMount () {
-    if (!this.props.accountIds) {
-      this.props.dispatch(fetchFavourites(this.props.params.statusId));
-    }
+    this.props.dispatch(fetchFavourites(this.props.params.statusId));
   }
 
   componentWillReceiveProps (nextProps) {
@@ -45,12 +36,8 @@ class Favourites extends ImmutablePureComponent {
     }
   }
 
-  handleRefresh = () => {
-    this.props.dispatch(fetchFavourites(this.props.params.statusId));
-  }
-
   render () {
-    const { intl, shouldUpdateScroll, accountIds, multiColumn } = this.props;
+    const { shouldUpdateScroll, accountIds, multiColumn } = this.props;
 
     if (!accountIds) {
       return (
@@ -63,14 +50,8 @@ class Favourites extends ImmutablePureComponent {
     const emptyMessage = <FormattedMessage id='empty_column.favourites' defaultMessage='No one has favourited this toot yet. When someone does, they will show up here.' />;
 
     return (
-      <Column bindToDocument={!multiColumn}>
-        <ColumnHeader
-          showBackButton
-          multiColumn={multiColumn}
-          extraButton={(
-            <button className='column-header__button' title={intl.formatMessage(messages.refresh)} aria-label={intl.formatMessage(messages.refresh)} onClick={this.handleRefresh}><Icon id='refresh' /></button>
-          )}
-        />
+      <Column>
+        <ColumnBackButton multiColumn={multiColumn} />
 
         <ScrollableList
           scrollKey='favourites'

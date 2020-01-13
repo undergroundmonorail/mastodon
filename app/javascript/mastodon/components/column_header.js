@@ -120,7 +120,7 @@ class ColumnHeader extends React.PureComponent {
           <button title={formatMessage(messages.moveRight)} aria-label={formatMessage(messages.moveRight)} className='text-btn column-header__setting-btn' onClick={this.handleMoveRight}><Icon id='chevron-right' /></button>
         </div>
       );
-    } else if (multiColumn && this.props.onPin) {
+    } else if (multiColumn) {
       pinButton = <button key='pin-button' className='text-btn column-header__setting-btn' onClick={this.handlePin}><Icon id='plus' /> <FormattedMessage id='column_header.pin' defaultMessage='Pin' /></button>;
     }
 
@@ -142,7 +142,7 @@ class ColumnHeader extends React.PureComponent {
       collapsedContent.push(pinButton);
     }
 
-    if (children || (multiColumn && this.props.onPin)) {
+    if (children || multiColumn) {
       collapseButton = <button className={collapsibleButtonClassName} title={formatMessage(collapsed ? messages.show : messages.hide)} aria-label={formatMessage(collapsed ? messages.show : messages.hide)} aria-pressed={collapsed ? 'false' : 'true'} onClick={this.handleToggleClick}><Icon id='sliders' /></button>;
     }
 
@@ -178,19 +178,7 @@ class ColumnHeader extends React.PureComponent {
     if (multiColumn || placeholder) {
       return component;
     } else {
-      // The portal container and the component may be rendered to the DOM in
-      // the same React render pass, so the container might not be available at
-      // the time `render()` is called.
-      const container = document.getElementById('tabs-bar__portal');
-      if (container === null) {
-        // The container wasn't available, force a re-render so that the
-        // component can eventually be inserted in the container and not scroll
-        // with the rest of the area.
-        this.forceUpdate();
-        return component;
-      } else {
-        return createPortal(component, container);
-      }
+      return createPortal(component, document.getElementById('tabs-bar__portal'));
     }
   }
 

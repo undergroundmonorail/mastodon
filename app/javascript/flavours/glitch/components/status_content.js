@@ -5,7 +5,6 @@ import { isRtl } from 'flavours/glitch/util/rtl';
 import { FormattedMessage } from 'react-intl';
 import Permalink from './permalink';
 import classnames from 'classnames';
-import Icon from 'flavours/glitch/components/icon';
 import { autoPlayGif } from 'flavours/glitch/util/initial_state';
 import { decode as decodeIDNA } from 'flavours/glitch/util/idna';
 
@@ -68,12 +67,10 @@ export default class StatusContent extends React.PureComponent {
     disabled: PropTypes.bool,
     onUpdate: PropTypes.func,
     tagLinks: PropTypes.bool,
-    rewriteMentions: PropTypes.string,
   };
 
   static defaultProps = {
     tagLinks: true,
-    rewriteMentions: 'no',
   };
 
   state = {
@@ -82,7 +79,7 @@ export default class StatusContent extends React.PureComponent {
 
   _updateStatusLinks () {
     const node = this.contentsNode;
-    const { tagLinks, rewriteMentions } = this.props;
+    const { tagLinks } = this.props;
 
     if (!node) {
       return;
@@ -102,13 +99,6 @@ export default class StatusContent extends React.PureComponent {
       if (mention) {
         link.addEventListener('click', this.onMentionClick.bind(this, mention), false);
         link.setAttribute('title', mention.get('acct'));
-        if (rewriteMentions !== 'no') {
-          while (link.firstChild) link.removeChild(link.firstChild);
-          link.appendChild(document.createTextNode('@'));
-          const acctSpan = document.createElement('span');
-          acctSpan.textContent = rewriteMentions === 'acct' ? mention.get('acct') : mention.get('username');
-          link.appendChild(acctSpan);
-        }
       } else if (link.textContent[0] === '#' || (link.previousSibling && link.previousSibling.textContent && link.previousSibling.textContent[link.previousSibling.textContent.length - 1] === '#')) {
         link.addEventListener('click', this.onHashtagClick.bind(this, link.text), false);
       } else {
@@ -133,7 +123,7 @@ export default class StatusContent extends React.PureComponent {
       }
 
       link.setAttribute('target', '_blank');
-      link.setAttribute('rel', 'noopener noreferrer');
+      link.setAttribute('rel', 'noopener');
     }
   }
 
@@ -213,7 +203,7 @@ export default class StatusContent extends React.PureComponent {
 
     let element = e.target;
     while (element) {
-      if (['button', 'video', 'a', 'label', 'wave'].includes(element.localName)) {
+      if (element.localName === 'button' || element.localName === 'video' || element.localName === 'a' || element.localName === 'label') {
         return;
       }
       element = element.parentNode;
@@ -252,7 +242,6 @@ export default class StatusContent extends React.PureComponent {
       parseClick,
       disabled,
       tagLinks,
-      rewriteMentions,
     } = this.props;
 
     const hidden = this.props.onExpandedToggle ? !this.props.expanded : this.state.hidden;
@@ -290,10 +279,10 @@ export default class StatusContent extends React.PureComponent {
           key='0'
         />,
         mediaIcon ? (
-          <Icon
-            fixedWidth
-            className='status__content__spoiler-icon'
-            id={mediaIcon}
+          <i
+            className={
+              `fa fa-fw fa-${mediaIcon} status__content__spoiler-icon`
+            }
             aria-hidden='true'
             key='1'
           />
@@ -315,7 +304,7 @@ export default class StatusContent extends React.PureComponent {
           <p
             style={{ marginBottom: hidden && status.get('mentions').isEmpty() ? '0px' : null }}
           >
-            <span dangerouslySetInnerHTML={spoilerContent} />
+            <span dangerouslySetInnerHTML={spoilerContent} lang={status.get('language')} />
             {' '}
             <button tabIndex='0' className='status__content__spoiler-link' onClick={this.handleSpoilerClick}>
               {toggleText}
@@ -332,6 +321,7 @@ export default class StatusContent extends React.PureComponent {
               tabIndex={!hidden ? 0 : null}
               dangerouslySetInnerHTML={content}
               className='status__content__text'
+              lang={status.get('language')}
             />
             {media}
           </div>
@@ -350,8 +340,9 @@ export default class StatusContent extends React.PureComponent {
         >
           <div
             ref={this.setContentsRef}
-            key={`contents-${tagLinks}-${rewriteMentions}`}
+            key={`contents-${tagLinks}`}
             dangerouslySetInnerHTML={content}
+            lang={status.get('language')}
             className='status__content__text'
             tabIndex='0'
           />
@@ -366,7 +357,7 @@ export default class StatusContent extends React.PureComponent {
           tabIndex='0'
           ref={this.setRef}
         >
-          <div ref={this.setContentsRef} key={`contents-${tagLinks}`} className='status__content__text' dangerouslySetInnerHTML={content} tabIndex='0' />
+          <div ref={this.setContentsRef} key={`contents-${tagLinks}`} className='status__content__text' dangerouslySetInnerHTML={content} lang={status.get('language')} tabIndex='0' />
           {media}
         </div>
       );

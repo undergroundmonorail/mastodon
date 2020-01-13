@@ -4,25 +4,9 @@ class SpamCheck
   include Redisable
   include ActionView::Helpers::TextHelper
 
-  # Threshold over which two Nilsimsa values are considered
-  # to refer to the same text
   NILSIMSA_COMPARE_THRESHOLD = 95
-
-  # Nilsimsa doesn't work well on small inputs, so below
-  # this size, we check only for exact matches with MD5
-  NILSIMSA_MIN_SIZE = 10
-
-  # How long to keep the trail of digests between updates,
-  # there is no reason to store it forever
-  EXPIRE_SET_AFTER = 1.week.seconds
-
-  # How many digests to keep in an account's trail. If it's
-  # too small, spam could rotate around different message templates
-  MAX_TRAIL_SIZE = 10
-
-  # How many detected duplicates to allow through before
-  # considering the message as spam
-  THRESHOLD = 5
+  NILSIMSA_MIN_SIZE          = 10
+  EXPIRE_SET_AFTER           = 1.week.seconds
 
   def initialize(status)
     @account = status.account
@@ -37,13 +21,14 @@ class SpamCheck
     if insufficient_data?
       false
     elsif nilsimsa?
-      digests_over_threshold?('nilsimsa') { |_, other_digest| nilsimsa_compare_value(digest, other_digest) >= NILSIMSA_COMPARE_THRESHOLD }
+      any_other_digest?('nilsimsa') { |_, other_digest| nilsimsa_compare_value(digest, other_digest) >= NILSIMSA_COMPARE_THRESHOLD }
     else
-      digests_over_threshold?('md5') { |_, other_digest| other_digest == digest }
+      any_other_digest?('md5') { |_, other_digest| other_digest == digest }
     end
   end
 
   def flag!
+    auto_silence_account!
     auto_report_status!
   end
 
@@ -53,7 +38,7 @@ class SpamCheck
     # get the correct status ID back, we have to save it in the string value
 
     redis.zadd(redis_key, @status.id, digest_with_algorithm)
-    redis.zremrangebyrank(redis_key, 0, -(MAX_TRAIL_SIZE + 1))
+    redis.zremrangebyrank(redis_key, '0', '-10')
     redis.expire(redis_key, EXPIRE_SET_AFTER)
   end
 
@@ -93,20 +78,6 @@ class SpamCheck
     end
   end
 
-  class << self
-    def perform(status)
-      spam_check = new(status)
-
-      return if spam_check.skip?
-
-      if spam_check.spam?
-        spam_check.flag!
-      else
-        spam_check.remember!
-      end
-    end
-  end
-
   private
 
   def disabled?
@@ -133,13 +104,17 @@ class SpamCheck
     text.gsub(/\s+/, ' ').strip
   end
 
+  def auto_silence_account!
+    @account.silence!
+  end
+
   def auto_report_status!
     status_ids = Status.where(visibility: %i(public unlisted)).where(id: matching_status_ids).pluck(:id) + [@status.id] if @status.distributable?
-    ReportService.new.call(Account.representative, @account, status_ids: status_ids, comment: I18n.t('spam_check.spam_detected'))
+    ReportService.new.call(Account.representative, @account, status_ids: status_ids, comment: I18n.t('spam_check.spam_detected_and_silenced'))
   end
 
   def already_flagged?
-    @account.silenced? || @account.targeted_reports.unresolved.where(account_id: -99).exists?
+    @account.silenced?
   end
 
   def trusted?
@@ -174,14 +149,14 @@ class SpamCheck
     redis.zrange(redis_key, 0, -1)
   end
 
-  def digests_over_threshold?(filter_algorithm)
-    other_digests.select do |record|
+  def any_other_digest?(filter_algorithm)
+    other_digests.any? do |record|
       algorithm, other_digest, status_id = record.split(':')
 
       next unless algorithm == filter_algorithm
 
       yield algorithm, other_digest, status_id
-    end.size >= THRESHOLD
+    end
   end
 
   def matching_status_ids

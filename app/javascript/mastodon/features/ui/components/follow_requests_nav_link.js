@@ -4,10 +4,12 @@ import { fetchFollowRequests } from 'mastodon/actions/accounts';
 import { connect } from 'react-redux';
 import { NavLink, withRouter } from 'react-router-dom';
 import IconWithBadge from 'mastodon/components/icon_with_badge';
+import { me } from 'mastodon/initial_state';
 import { List as ImmutableList } from 'immutable';
 import { FormattedMessage } from 'react-intl';
 
 const mapStateToProps = state => ({
+  locked: state.getIn(['accounts', me, 'locked']),
   count: state.getIn(['user_lists', 'follow_requests', 'items'], ImmutableList()).size,
 });
 
@@ -17,19 +19,22 @@ class FollowRequestsNavLink extends React.Component {
 
   static propTypes = {
     dispatch: PropTypes.func.isRequired,
+    locked: PropTypes.bool,
     count: PropTypes.number.isRequired,
   };
 
   componentDidMount () {
-    const { dispatch } = this.props;
+    const { dispatch, locked } = this.props;
 
-    dispatch(fetchFollowRequests());
+    if (locked) {
+      dispatch(fetchFollowRequests());
+    }
   }
 
   render () {
-    const { count } = this.props;
+    const { locked, count } = this.props;
 
-    if (count === 0) {
+    if (!locked || count === 0) {
       return null;
     }
 

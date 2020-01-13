@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ActivityTracker
-  EXPIRE_AFTER = 6.months.seconds
+  EXPIRE_AFTER = 90.days.seconds
 
   class << self
     include Redisable

@@ -71,9 +71,6 @@ Naming/MemoizedInstanceVariableName:
 Rails:
   Enabled: true
 
-Rails/EnumHash:
-  Enabled: false
-
 Rails/HasAndBelongsToMany:
   Enabled: false
 
@@ -104,9 +101,6 @@ Style/Documentation:
 
 Style/DoubleNegation:
   Enabled: true
-
-Style/FormatStringToken:
-  Enabled: false
 
 Style/FrozenStringLiteralComment:
   Enabled: true

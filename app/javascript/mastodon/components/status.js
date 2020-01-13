@@ -12,7 +12,7 @@ import AttachmentList from './attachment_list';
 import Card from '../features/status/components/card';
 import { injectIntl, FormattedMessage } from 'react-intl';
 import ImmutablePureComponent from 'react-immutable-pure-component';
-import { MediaGallery, Video, Audio } from '../features/ui/util/async-components';
+import { MediaGallery, Video } from '../features/ui/util/async-components';
 import { HotKeys } from 'react-hotkeys';
 import classNames from 'classnames';
 import Icon from 'mastodon/components/icon';
@@ -76,7 +76,6 @@ class Status extends ImmutablePureComponent {
     onEmbed: PropTypes.func,
     onHeightChange: PropTypes.func,
     onToggleHidden: PropTypes.func,
-    onToggleCollapsed: PropTypes.func,
     muted: PropTypes.bool,
     hidden: PropTypes.bool,
     unread: PropTypes.bool,
@@ -103,6 +102,19 @@ class Status extends ImmutablePureComponent {
     statusId: undefined,
   };
 
+  // Track height changes we know about to compensate scrolling
+  componentDidMount () {
+    this.didShowCard = !this.props.muted && !this.props.hidden && this.props.status && this.props.status.get('card');
+  }
+
+  getSnapshotBeforeUpdate () {
+    if (this.props.getScrollPosition) {
+      return this.props.getScrollPosition();
+    } else {
+      return null;
+    }
+  }
+
   static getDerivedStateFromProps(nextProps, prevState) {
     if (nextProps.status && nextProps.status.get('id') !== prevState.statusId) {
       return {
@@ -111,6 +123,32 @@ class Status extends ImmutablePureComponent {
       };
     } else {
       return null;
+    }
+  }
+
+  // Compensate height changes
+  componentDidUpdate (prevProps, prevState, snapshot) {
+    const doShowCard  = !this.props.muted && !this.props.hidden && this.props.status && this.props.status.get('card');
+
+    if (doShowCard && !this.didShowCard) {
+      this.didShowCard = true;
+
+      if (snapshot !== null && this.props.updateScrollBottom) {
+        if (this.node && this.node.offsetTop < snapshot.top) {
+          this.props.updateScrollBottom(snapshot.height - snapshot.top);
+        }
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.node && this.props.getScrollPosition) {
+      const position = this.props.getScrollPosition();
+      if (position !== null && this.node.offsetTop < position.top) {
+        requestAnimationFrame(() => {
+          this.props.updateScrollBottom(position.height - position.top);
+        });
+      }
     }
   }
 
@@ -158,43 +196,18 @@ class Status extends ImmutablePureComponent {
 
   handleExpandedToggle = () => {
     this.props.onToggleHidden(this._properStatus());
-  }
-
-  handleCollapsedToggle = isCollapsed => {
-    this.props.onToggleCollapsed(this._properStatus(), isCollapsed);
-  }
+  };
 
   renderLoadingMediaGallery () {
-    return <div className='media-gallery' style={{ height: '110px' }} />;
+    return <div className='media_gallery' style={{ height: '110px' }} />;
   }
 
   renderLoadingVideoPlayer () {
-    return <div className='video-player' style={{ height: '110px' }} />;
-  }
-
-  renderLoadingAudioPlayer () {
-    return <div className='audio-player' style={{ height: '110px' }} />;
+    return <div className='media-spoiler-video' style={{ height: '110px' }} />;
   }
 
   handleOpenVideo = (media, startTime) => {
     this.props.onOpenVideo(media, startTime);
-  }
-
-  handleHotkeyOpenMedia = e => {
-    const { onOpenMedia, onOpenVideo } = this.props;
-    const status = this._properStatus();
-
-    e.preventDefault();
-
-    if (status.get('media_attachments').size > 0) {
-      if (status.getIn(['media_attachments', 0, 'type']) === 'audio') {
-        // TODO: toggle play/paused?
-      } else if (status.getIn(['media_attachments', 0, 'type']) === 'video') {
-        onOpenVideo(status.getIn(['media_attachments', 0]), 0);
-      } else {
-        onOpenMedia(status.get('media_attachments'), 0);
-      }
-    }
   }
 
   handleHotkeyReply = e => {
@@ -265,28 +278,12 @@ class Status extends ImmutablePureComponent {
       return null;
     }
 
-    const handlers = this.props.muted ? {} : {
-      reply: this.handleHotkeyReply,
-      favourite: this.handleHotkeyFavourite,
-      boost: this.handleHotkeyBoost,
-      mention: this.handleHotkeyMention,
-      open: this.handleHotkeyOpen,
-      openProfile: this.handleHotkeyOpenProfile,
-      moveUp: this.handleHotkeyMoveUp,
-      moveDown: this.handleHotkeyMoveDown,
-      toggleHidden: this.handleHotkeyToggleHidden,
-      toggleSensitive: this.handleHotkeyToggleSensitive,
-      openMedia: this.handleHotkeyOpenMedia,
-    };
-
     if (hidden) {
       return (
-        <HotKeys handlers={handlers}>
-          <div ref={this.handleRef} className={classNames('status__wrapper', { focusable: !this.props.muted })} tabIndex='0'>
-            {status.getIn(['account', 'display_name']) || status.getIn(['account', 'username'])}
-            {status.get('content')}
-          </div>
-        </HotKeys>
+        <div ref={this.handleRef}>
+          {status.getIn(['account', 'display_name']) || status.getIn(['account', 'username'])}
+          {status.get('content')}
+        </div>
       );
     }
 
@@ -336,23 +333,7 @@ class Status extends ImmutablePureComponent {
             media={status.get('media_attachments')}
           />
         );
-      } else if (status.getIn(['media_attachments', 0, 'type']) === 'audio') {
-        const attachment = status.getIn(['media_attachments', 0]);
-
-        media = (
-          <Bundle fetchComponent={Audio} loading={this.renderLoadingAudioPlayer} >
-            {Component => (
-              <Component
-                src={attachment.get('url')}
-                alt={attachment.get('description')}
-                duration={attachment.getIn(['meta', 'original', 'duration'], 0)}
-                peaks={[0]}
-                height={70}
-              />
-            )}
-          </Bundle>
-        );
-      } else if (status.getIn(['media_attachments', 0, 'type']) === 'video') {
+      } else if (['video', 'audio'].includes(status.getIn(['media_attachments', 0, 'type']))) {
         const attachment = status.getIn(['media_attachments', 0]);
 
         media = (
@@ -413,6 +394,19 @@ class Status extends ImmutablePureComponent {
       statusAvatar = <AvatarOverlay account={status.get('account')} friend={account} />;
     }
 
+    const handlers = this.props.muted ? {} : {
+      reply: this.handleHotkeyReply,
+      favourite: this.handleHotkeyFavourite,
+      boost: this.handleHotkeyBoost,
+      mention: this.handleHotkeyMention,
+      open: this.handleHotkeyOpen,
+      openProfile: this.handleHotkeyOpenProfile,
+      moveUp: this.handleHotkeyMoveUp,
+      moveDown: this.handleHotkeyMoveDown,
+      toggleHidden: this.handleHotkeyToggleHidden,
+      toggleSensitive: this.handleHotkeyToggleSensitive,
+    };
+
     return (
       <HotKeys handlers={handlers}>
         <div className={classNames('status__wrapper', `status__wrapper-${status.get('visibility')}`, { 'status__wrapper-reply': !!status.get('in_reply_to_id'), read: unread === false, focusable: !this.props.muted })} tabIndex={this.props.muted ? null : 0} data-featured={featured ? 'true' : null} aria-label={textForScreenReader(intl, status, rebloggedByText)} ref={this.handleRef}>
@@ -421,9 +415,9 @@ class Status extends ImmutablePureComponent {
           <div className={classNames('status', `status-${status.get('visibility')}`, { 'status-reply': !!status.get('in_reply_to_id'), muted: this.props.muted, read: unread === false })} data-id={status.get('id')}>
             <div className='status__expand' onClick={this.handleExpandClick} role='presentation' />
             <div className='status__info'>
-              <a href={status.get('url')} className='status__relative-time' target='_blank' rel='noopener noreferrer'><RelativeTimestamp timestamp={status.get('created_at')} /></a>
+              <a href={status.get('url')} className='status__relative-time' target='_blank' rel='noopener'><RelativeTimestamp timestamp={status.get('created_at')} /></a>
 
-              <a onClick={this.handleAccountClick} data-id={status.getIn(['account', 'id'])} href={status.getIn(['account', 'url'])} title={status.getIn(['account', 'acct'])} className='status__display-name' target='_blank' rel='noopener noreferrer'>
+              <a onClick={this.handleAccountClick} target='_blank' data-id={status.getIn(['account', 'id'])} href={status.getIn(['account', 'url'])} title={status.getIn(['account', 'acct'])} className='status__display-name'>
                 <div className='status__avatar'>
                   {statusAvatar}
                 </div>
@@ -432,7 +426,7 @@ class Status extends ImmutablePureComponent {
               </a>
             </div>
 
-            <StatusContent status={status} onClick={this.handleClick} expanded={!status.get('hidden')} onExpandedToggle={this.handleExpandedToggle} collapsable onCollapsedToggle={this.handleCollapsedToggle} />
+            <StatusContent status={status} onClick={this.handleClick} expanded={!status.get('hidden')} onExpandedToggle={this.handleExpandedToggle} collapsable />
 
             {media}
 

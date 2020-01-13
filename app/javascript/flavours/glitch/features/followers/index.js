@@ -24,8 +24,8 @@ const mapStateToProps = (state, props) => ({
   hasMore: !!state.getIn(['user_lists', 'followers', props.params.accountId, 'next']),
 });
 
-export default @connect(mapStateToProps)
-class Followers extends ImmutablePureComponent {
+@connect(mapStateToProps)
+export default class Followers extends ImmutablePureComponent {
 
   static propTypes = {
     params: PropTypes.object.isRequired,
@@ -33,14 +33,11 @@ class Followers extends ImmutablePureComponent {
     accountIds: ImmutablePropTypes.list,
     hasMore: PropTypes.bool,
     isAccount: PropTypes.bool,
-    multiColumn: PropTypes.bool,
   };
 
   componentWillMount () {
-    if (!this.props.accountIds) {
-      this.props.dispatch(fetchAccount(this.props.params.accountId));
-      this.props.dispatch(fetchFollowers(this.props.params.accountId));
-    }
+    this.props.dispatch(fetchAccount(this.props.params.accountId));
+    this.props.dispatch(fetchFollowers(this.props.params.accountId));
   }
 
   componentWillReceiveProps (nextProps) {
@@ -63,6 +60,7 @@ class Followers extends ImmutablePureComponent {
   }
 
   handleLoadMore = debounce(() => {
+    e.preventDefault();
     this.props.dispatch(expandFollowers(this.props.params.accountId));
   }, 300, { leading: true });
 
@@ -71,7 +69,7 @@ class Followers extends ImmutablePureComponent {
   }
 
   render () {
-    const { accountIds, hasMore, isAccount, multiColumn } = this.props;
+    const { accountIds, hasMore, isAccount } = this.props;
 
     if (!isAccount) {
       return (
@@ -93,7 +91,7 @@ class Followers extends ImmutablePureComponent {
 
     return (
       <Column ref={this.setRef}>
-        <ProfileColumnHeader onClick={this.handleHeaderClick} multiColumn={multiColumn} />
+        <ProfileColumnHeader onClick={this.handleHeaderClick} />
 
         <ScrollableList
           scrollKey='followers'
@@ -102,7 +100,6 @@ class Followers extends ImmutablePureComponent {
           prepend={<HeaderContainer accountId={this.props.params.accountId} hideTabs />}
           alwaysPrepend
           emptyMessage={emptyMessage}
-          bindToDocument={!multiColumn}
         >
           {accountIds.map(id =>
             <AccountContainer key={id} id={id} withNote={false} />

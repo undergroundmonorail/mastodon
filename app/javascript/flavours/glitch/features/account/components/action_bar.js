@@ -8,8 +8,8 @@ import { me, isStaff } from 'flavours/glitch/util/initial_state';
 import { profileLink, accountAdminLink } from 'flavours/glitch/util/backend_links';
 import Icon from 'flavours/glitch/components/icon';
 
-export default @injectIntl
-class ActionBar extends React.PureComponent {
+@injectIntl
+export default class ActionBar extends React.PureComponent {
 
   static propTypes = {
     account: ImmutablePropTypes.map.isRequired,
@@ -31,7 +31,7 @@ class ActionBar extends React.PureComponent {
     if (account.get('acct') !== account.get('username')) {
       extraInfo = (
         <div className='account__disclaimer'>
-          <Icon id='info-circle' fixedWidth /> <FormattedMessage
+          <Icon icon='info-circle' fixedWidth /> <FormattedMessage
             id='account.disclaimer_full'
             defaultMessage="Information below may reflect the user's profile incompletely."
           />

@@ -11,7 +11,3 @@ hu:
           attributes:
             username:
               invalid: csak betűk, számok vagy alávonás
-        status:
-          attributes:
-            reblog:
-              taken: már létezik ehhez a bejegyzéshez

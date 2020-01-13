@@ -22,7 +22,6 @@ const messages = defineMessages({
   settings_subheading: { id: 'column_subheading.settings', defaultMessage: 'Settings' },
   community_timeline: { id: 'navigation_bar.community_timeline', defaultMessage: 'Local timeline' },
   direct: { id: 'navigation_bar.direct', defaultMessage: 'Direct messages' },
-  bookmarks: { id: 'navigation_bar.bookmarks', defaultMessage: 'Bookmarks' },
   preferences: { id: 'navigation_bar.preferences', defaultMessage: 'Preferences' },
   follow_requests: { id: 'navigation_bar.follow_requests', defaultMessage: 'Follow requests' },
   favourites: { id: 'navigation_bar.favourites', defaultMessage: 'Favourites' },
@@ -78,14 +77,16 @@ class GettingStarted extends ImmutablePureComponent {
   };
 
   componentDidMount () {
-    const { fetchFollowRequests, multiColumn } = this.props;
+    const { myAccount, fetchFollowRequests, multiColumn } = this.props;
 
     if (!multiColumn && window.innerWidth >= NAVIGATION_PANEL_BREAKPOINT) {
       this.context.router.history.replace('/timelines/home');
       return;
     }
 
-    fetchFollowRequests();
+    if (myAccount.get('locked')) {
+      fetchFollowRequests();
+    }
   }
 
   render () {
@@ -106,7 +107,7 @@ class GettingStarted extends ImmutablePureComponent {
 
       if (profile_directory) {
         navItems.push(
-          <ColumnLink key={i++} icon='address-book' text={intl.formatMessage(messages.profile_directory)} to='/directory' />
+          <ColumnLink key={i++} icon='address-book' text={intl.formatMessage(messages.profile_directory)} href='/explore' />
         );
 
         height += 48;
@@ -119,7 +120,7 @@ class GettingStarted extends ImmutablePureComponent {
       height += 34;
     } else if (profile_directory) {
       navItems.push(
-        <ColumnLink key={i++} icon='address-book' text={intl.formatMessage(messages.profile_directory)} to='/directory' />
+        <ColumnLink key={i++} icon='address-book' text={intl.formatMessage(messages.profile_directory)} href='/explore' />
       );
 
       height += 48;
@@ -128,14 +129,12 @@ class GettingStarted extends ImmutablePureComponent {
     navItems.push(
       <ColumnLink key={i++} icon='envelope' text={intl.formatMessage(messages.direct)} to='/timelines/direct' />,
       <ColumnLink key={i++} icon='heart' text={intl.formatMessage(messages.favourites)} to='/favourites' />,
-      <ColumnLink key={i++} icon='bookmark' text={intl.formatMessage(messages.bookmarks)} to='/bookmarks' />,
-      <ColumnLink key={i++} icon='star' text={intl.formatMessage(messages.favourites)} to='/favourites' />,
       <ColumnLink key={i++} icon='list-ul' text={intl.formatMessage(messages.lists)} to='/lists' />
     );
 
-    height += 48*4;
+    height += 48*3;
 
-    if (myAccount.get('locked') || unreadFollowRequests > 0) {
+    if (myAccount.get('locked')) {
       navItems.push(<ColumnLink key={i++} icon='user-plus' text={intl.formatMessage(messages.follow_requests)} badge={badgeDisplay(unreadFollowRequests, 40)} to='/follow_requests' />);
       height += 48;
     }

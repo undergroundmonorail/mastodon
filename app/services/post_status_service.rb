@@ -49,13 +49,7 @@ class PostStatusService < BaseService
   def preprocess_attributes!
     if @text.blank? && @options[:spoiler_text].present?
      @text = '.'
-     if @media.find(&:video?) || @media.find(&:gifv?)
-       @text = '📹'
-     elsif @media.find(&:audio?)
-       @text = '🎵'
-     elsif @media.find(&:image?)
-       @text = '🖼'
-     end
+     @text = @media.find(&:video?) ? '📹' : '🖼' if @media.size > 0
     end
     @visibility   = @options[:visibility] || @account.user&.setting_default_privacy
     @visibility   = :unlisted if @visibility == :public && @account.silenced?
@@ -184,7 +178,7 @@ class PostStatusService < BaseService
   def poll_attributes
     return if @options[:poll].blank?
 
-    @options[:poll].merge(account: @account, voters_count: 0)
+    @options[:poll].merge(account: @account)
   end
 
   def scheduled_options

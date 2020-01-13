@@ -14,9 +14,9 @@ const mapStateToProps = state => ({
   collapseEnabled: state.getIn(['local_settings', 'collapsed', 'enabled']),
 });
 
-export default @connect(mapStateToProps)
+@connect(mapStateToProps)
 @injectIntl
-class KeyboardShortcuts extends ImmutablePureComponent {
+export default class KeyboardShortcuts extends ImmutablePureComponent {
 
   static propTypes = {
     intl: PropTypes.object.isRequired,
@@ -25,10 +25,10 @@ class KeyboardShortcuts extends ImmutablePureComponent {
   };
 
   render () {
-    const { intl, collapseEnabled, multiColumn } = this.props;
+    const { intl, collapseEnabled } = this.props;
 
     return (
-      <Column bindToDocument={!multiColumn} icon='question' heading={intl.formatMessage(messages.heading)}>
+      <Column icon='question' heading={intl.formatMessage(messages.heading)}>
         <ColumnBackButtonSlim />
         <div className='keyboard-shortcuts scrollable optionally-scrollable'>
           <table>
@@ -66,10 +66,6 @@ class KeyboardShortcuts extends ImmutablePureComponent {
               <tr>
                 <td><kbd>enter</kbd>, <kbd>o</kbd></td>
                 <td><FormattedMessage id='keyboard_shortcuts.enter' defaultMessage='to open status' /></td>
-              </tr>
-              <tr>
-                <td><kbd>e</kbd></td>
-                <td><FormattedMessage id='keyboard_shortcuts.open_media' defaultMessage='to open media' /></td>
               </tr>
               <tr>
                 <td><kbd>x</kbd></td>

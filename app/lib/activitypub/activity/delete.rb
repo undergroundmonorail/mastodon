@@ -13,7 +13,8 @@ class ActivityPub::Activity::Delete < ActivityPub::Activity
 
   def delete_person
     lock_or_return("delete_in_progress:#{@account.id}") do
-      SuspendAccountService.new.call(@account, reserve_username: false)
+      SuspendAccountService.new.call(@account)
+      @account.destroy!
     end
   end
 
@@ -69,7 +70,7 @@ class ActivityPub::Activity::Delete < ActivityPub::Activity
   end
 
   def delete_now!
-    RemoveStatusService.new.call(@status, redraft: false)
+    RemoveStatusService.new.call(@status)
   end
 
   def payload

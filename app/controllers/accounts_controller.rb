@@ -9,9 +9,6 @@ class AccountsController < ApplicationController
   before_action :set_cache_headers
   before_action :set_body_classes
 
-  skip_around_action :set_locale, if: -> { [:json, :rss].include?(request.format) }
-  skip_before_action :require_functional!
-
   def show
     respond_to do |format|
       format.html do
@@ -20,7 +17,6 @@ class AccountsController < ApplicationController
 
         @pinned_statuses   = []
         @endorsed_accounts = @account.endorsed_accounts.to_a.sample(4)
-        @featured_hashtags = @account.featured_tags.order(statuses_count: :desc)
 
         if current_account && @account.blocking?(current_account)
           @statuses = []
@@ -30,7 +26,6 @@ class AccountsController < ApplicationController
         @pinned_statuses = cache_collection(@account.pinned_statuses, Status) if show_pinned_statuses?
         @statuses        = filtered_status_page(params)
         @statuses        = cache_collection(@statuses, Status)
-        @rss_url         = rss_url
 
         unless @statuses.empty?
           @older_url = older_url if @statuses.last.id > filtered_statuses.last.id
@@ -39,11 +34,10 @@ class AccountsController < ApplicationController
       end
 
       format.rss do
-        expires_in 1.minute, public: true
+        expires_in 0, public: true
 
-        @statuses = filtered_statuses.without_reblogs.without_replies.limit(PAGE_SIZE)
-        @statuses = cache_collection(@statuses, Status)
-        render xml: RSS::AccountSerializer.render(@account, @statuses, params[:tag])
+        @statuses = cache_collection(default_statuses.without_reblogs.without_replies.limit(PAGE_SIZE), Status)
+        render xml: RSS::AccountSerializer.render(@account, @statuses)
       end
 
       format.json do
@@ -101,14 +95,6 @@ class AccountsController < ApplicationController
     params[:username]
   end
 
-  def rss_url
-    if tag_requested?
-      short_account_tag_url(@account, params[:tag], format: 'rss')
-    else
-      short_account_url(@account, format: 'rss')
-    end
-  end
-
   def older_url
     pagination_url(max_id: @statuses.last.id)
   end
@@ -130,15 +116,15 @@ class AccountsController < ApplicationController
   end
 
   def media_requested?
-    request.path.ends_with?('/media') && !tag_requested?
+    request.path.ends_with?('/media')
   end
 
   def replies_requested?
-    request.path.ends_with?('/with_replies') && !tag_requested?
+    request.path.ends_with?('/with_replies')
   end
 
   def tag_requested?
-    request.path.split('.').first.ends_with?(Addressable::URI.parse("/tagged/#{params[:tag]}").normalize)
+    request.path.ends_with?(Addressable::URI.parse("/tagged/#{params[:tag]}").normalize)
   end
 
   def filtered_status_page(params)

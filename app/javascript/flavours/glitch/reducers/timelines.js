@@ -40,8 +40,6 @@ const expandNormalizedTimeline = (state, timeline, statuses, next, isPartial, is
     if (timeline.endsWith(':pinned')) {
       mMap.set('items', statuses.map(status => status.get('id')));
     } else if (!statuses.isEmpty()) {
-      usePendingItems = isLoadingRecent && (usePendingItems || !mMap.get('pendingItems').isEmpty());
-
       mMap.update(usePendingItems ? 'pendingItems' : 'items', ImmutableList(), oldIds => {
         const newIds = statuses.map(status => status.get('id'));
         const lastIndex = oldIds.findLastIndex(id => id !== null && compareId(id, newIds.last()) >= 0) + 1;
@@ -60,23 +58,16 @@ const expandNormalizedTimeline = (state, timeline, statuses, next, isPartial, is
   }));
 };
 
-const updateTimeline = (state, timeline, status, usePendingItems, filtered) => {
-  const top = state.getIn([timeline, 'top']);
-
-  if (usePendingItems || !state.getIn([timeline, 'pendingItems']).isEmpty()) {
+const updateTimeline = (state, timeline, status, usePendingItems) => {
+  if (usePendingItems) {
     if (state.getIn([timeline, 'pendingItems'], ImmutableList()).includes(status.get('id')) || state.getIn([timeline, 'items'], ImmutableList()).includes(status.get('id'))) {
       return state;
     }
 
-    state = state.update(timeline, initialTimeline, map => map.update('pendingItems', list => list.unshift(status.get('id'))));
-
-    if (!filtered) {
-      state = state.updateIn([timeline, 'unread'], unread => unread + 1);
-    }
-
-    return state;
+    return state.update(timeline, initialTimeline, map => map.update('pendingItems', list => list.unshift(status.get('id'))));
   }
 
+  const top        = state.getIn([timeline, 'top']);
   const ids        = state.getIn([timeline, 'items'], ImmutableList());
   const includesId = ids.includes(status.get('id'));
   const unread     = state.getIn([timeline, 'unread'], 0);
@@ -88,7 +79,7 @@ const updateTimeline = (state, timeline, status, usePendingItems, filtered) => {
   let newIds = ids;
 
   return state.update(timeline, initialTimeline, map => map.withMutations(mMap => {
-    if (!top && !filtered) mMap.set('unread', unread + 1);
+    if (!top) mMap.set('unread', unread + 1);
     if (top && ids.size > 40) newIds = newIds.take(20);
     mMap.set('items', newIds.unshift(status.get('id')));
   }));
@@ -136,7 +127,7 @@ const filterTimeline = (timeline, state, relationship, statuses) => {
 
 const updateTop = (state, timeline, top) => {
   return state.update(timeline, initialTimeline, map => map.withMutations(mMap => {
-    if (top) mMap.set('unread', mMap.get('pendingItems').size);
+    if (top) mMap.set('unread', 0);
     mMap.set('top', top);
   }));
 };
@@ -153,7 +144,7 @@ export default function timelines(state = initialState, action) {
   case TIMELINE_EXPAND_SUCCESS:
     return expandNormalizedTimeline(state, action.timeline, fromJS(action.statuses), action.next, action.partial, action.isLoadingRecent, action.usePendingItems);
   case TIMELINE_UPDATE:
-    return updateTimeline(state, action.timeline, fromJS(action.status), action.usePendingItems, action.filtered);
+    return updateTimeline(state, action.timeline, fromJS(action.status), action.usePendingItems);
   case TIMELINE_DELETE:
     return deleteStatus(state, action.id, action.accountId, action.references, action.reblogOf);
   case TIMELINE_CLEAR:

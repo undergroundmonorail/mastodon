@@ -45,8 +45,8 @@ class LoadMoreMedia extends ImmutablePureComponent {
 
 }
 
-export default @connect(mapStateToProps)
-class AccountGallery extends ImmutablePureComponent {
+@connect(mapStateToProps)
+export default class AccountGallery extends ImmutablePureComponent {
 
   static propTypes = {
     params: PropTypes.object.isRequired,
@@ -55,7 +55,6 @@ class AccountGallery extends ImmutablePureComponent {
     isLoading: PropTypes.bool,
     hasMore: PropTypes.bool,
     isAccount: PropTypes.bool,
-    multiColumn: PropTypes.bool,
   };
 
   state = {
@@ -114,8 +113,6 @@ class AccountGallery extends ImmutablePureComponent {
   handleOpenMedia = attachment => {
     if (attachment.get('type') === 'video') {
       this.props.dispatch(openModal('VIDEO', { media: attachment, status: attachment.get('status') }));
-    } else if (attachment.get('type') === 'audio') {
-      this.props.dispatch(openModal('AUDIO', { media: attachment, status: attachment.get('status') }));
     } else {
       const media = attachment.getIn(['status', 'media_attachments']);
       const index = media.findIndex(x => x.get('id') === attachment.get('id'));
@@ -131,7 +128,7 @@ class AccountGallery extends ImmutablePureComponent {
   }
 
   render () {
-    const { attachments, isLoading, hasMore, isAccount, multiColumn } = this.props;
+    const { attachments, isLoading, hasMore, isAccount } = this.props;
     const { width } = this.state;
 
     if (!isAccount) {
@@ -158,7 +155,7 @@ class AccountGallery extends ImmutablePureComponent {
 
     return (
       <Column ref={this.setColumnRef}>
-        <ProfileColumnHeader onClick={this.handleHeaderClick} multiColumn={multiColumn} />
+        <ProfileColumnHeader onClick={this.handleHeaderClick} />
 
         <ScrollContainer scrollKey='account_gallery' shouldUpdateScroll={this.shouldUpdateScroll}>
           <div className='scrollable scrollable--flex' onScroll={this.handleScroll}>
