@@ -25,20 +25,24 @@
 #  full_status_text       :text             default(""), not null
 #  poll_id                :bigint(8)
 #  content_type           :string
+#  deleted_at             :datetime
 #
 
 class Status < ApplicationRecord
   before_destroy :unlink_from_conversations
 
+  include Discard::Model
   include Paginable
   include Cacheable
   include StatusThreadingConcern
+
+  self.discard_column = :deleted_at
 
   # If `override_timestamps` is set at creation time, Snowflake ID creation
   # will be based on current time instead of `created_at`
   attr_accessor :override_timestamps
 
-  update_index('statuses#status', :proper) if Chewy.enabled?
+  update_index('statuses#status', :proper)
 
   enum visibility: [:public, :unlisted, :private, :direct, :limited], _suffix: :visibility
 
@@ -77,12 +81,13 @@ class Status < ApplicationRecord
 
   accepts_nested_attributes_for :poll
 
-  default_scope { recent }
+  default_scope { recent.kept }
 
   scope :recent, -> { reorder(id: :desc) }
   scope :remote, -> { where(local: false).where.not(uri: nil) }
   scope :local,  -> { where(local: true).or(where(uri: nil)) }
 
+  scope :with_accounts, ->(ids) { where(id: ids).includes(:account) }
   scope :without_replies, -> { where('statuses.reply = FALSE OR statuses.in_reply_to_account_id = statuses.account_id') }
   scope :without_reblogs, -> { where('statuses.reblog_of_id IS NULL') }
   scope :with_public_visibility, -> { where(visibility: :public) }
@@ -132,12 +137,14 @@ class Status < ApplicationRecord
   REAL_TIME_WINDOW = 6.hours
 
   def searchable_by(preloaded = nil)
-    ids = [account_id]
+    ids = []
+
+    ids << account_id if local?
 
     if preloaded.nil?
-      ids += mentions.pluck(:account_id)
-      ids += favourites.pluck(:account_id)
-      ids += reblogs.pluck(:account_id)
+      ids += mentions.where(account: Account.local).pluck(:account_id)
+      ids += favourites.where(account: Account.local).pluck(:account_id)
+      ids += reblogs.where(account: Account.local).pluck(:account_id)
     else
       ids += preloaded.mentions[id] || []
       ids += preloaded.favourites[id] || []
@@ -194,8 +201,12 @@ class Status < ApplicationRecord
   def title
     if destroyed?
       "#{account.acct} deleted status"
+    elsif reblog?
+      preview = sensitive ? '<sensitive>' : text.slice(0, 10).split("\n")[0]
+      "#{account.acct} shared #{reblog.account.acct}'s: #{preview}"
     else
-      reblog? ? "#{account.acct} shared a status by #{reblog.account.acct}" : "New status by #{account.acct}"
+      preview = sensitive ? '<sensitive>' : text.slice(0, 20).split("\n")[0]
+      "#{account.acct}: #{preview}"
     end
   end
 
@@ -215,6 +226,10 @@ class Status < ApplicationRecord
 
   def non_sensitive_with_media?
     !sensitive? && with_media?
+  end
+
+  def reported?
+    @reported ||= Report.where(target_account: account).unresolved.where('? = ANY(status_ids)', id).exists?
   end
 
   def emojis
@@ -280,10 +295,6 @@ class Status < ApplicationRecord
 
     def in_chosen_languages(account)
       where(language: nil).or where(language: account.chosen_languages)
-    end
-
-    def as_home_timeline(account)
-      where(account: [account] + account.following).where(visibility: [:public, :unlisted, :private])
     end
 
     def as_direct_timeline(account, limit = 20, max_id = nil, since_id = nil, cache_ids = false)
@@ -353,7 +364,7 @@ class Status < ApplicationRecord
     end
 
     def reblogs_map(status_ids, account_id)
-      select('reblog_of_id').where(reblog_of_id: status_ids).where(account_id: account_id).reorder(nil).each_with_object({}) { |s, h| h[s.reblog_of_id] = true }
+      unscoped.select('reblog_of_id').where(reblog_of_id: status_ids).where(account_id: account_id).each_with_object({}) { |s, h| h[s.reblog_of_id] = true }
     end
 
     def mutes_map(conversation_ids, account_id)
@@ -456,13 +467,16 @@ class Status < ApplicationRecord
     '❄️'
   end
 
+  def status_stat
+    super || build_status_stat
+  end
+
   private
 
   def update_status_stat!(attrs)
     return if marked_for_destruction? || destroyed?
 
-    record = status_stat || build_status_stat
-    record.update(attrs)
+    status_stat.update(attrs)
   end
 
   def store_uri

@@ -1,3 +1,47 @@
+@keyframes spring-flip-in {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  30% {
+    transform: rotate(-242.4deg);
+  }
+
+  60% {
+    transform: rotate(-158.35deg);
+  }
+
+  90% {
+    transform: rotate(-187.5deg);
+  }
+
+  100% {
+    transform: rotate(-180deg);
+  }
+}
+
+@keyframes spring-flip-out {
+  0% {
+    transform: rotate(-180deg);
+  }
+
+  30% {
+    transform: rotate(62.4deg);
+  }
+
+  60% {
+    transform: rotate(-21.635deg);
+  }
+
+  90% {
+    transform: rotate(7.5deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
 .status__content--with-action {
   cursor: pointer;
 }
@@ -52,6 +96,7 @@
 
   .status__content__text,
   .e-content {
+    overflow: hidden;
 
     & > ul,
     & > ol {
@@ -98,6 +143,11 @@
     sub {
       font-size: smaller;
       text-align: sub;
+    }
+
+    sup {
+      font-size: smaller;
+      vertical-align: super;
     }
 
     ul, ol {
@@ -201,7 +251,9 @@
 }
 
 .notif-cleaning {
-  .status, .notification-follow {
+  .status,
+  .notification-follow,
+  .notification-follow-request {
     padding-right: ($dismiss-overlay-width + 0.5rem);
   }
 }
@@ -225,7 +277,8 @@
   position: absolute;
 }
 
-.notification-follow {
+.notification-follow,
+.notification-follow-request {
   position: relative;
 
   // same like Status
@@ -277,7 +330,8 @@
   opacity: 1;
   animation: fade 150ms linear;
 
-  .video-player {
+  .video-player,
+  .audio-player {
     margin-top: 8px;
   }
 
@@ -442,6 +496,24 @@
     padding-left: 2px;
     padding-right: 2px;
   }
+
+  .status__collapse-button.active > .fa-angle-double-up {
+    transform: rotate(-180deg);
+  }
+}
+
+.no-reduce-motion .status__collapse-button {
+  &.activate {
+    & > .fa-angle-double-up {
+      animation: spring-flip-in 1s linear;
+    }
+  }
+
+  &.deactivate {
+    & > .fa-angle-double-up {
+      animation: spring-flip-out 1s linear;
+    }
+  }
 }
 
 .status__info__account {
@@ -467,7 +539,8 @@
       white-space: normal;
     }
 
-    .video-player {
+    .video-player,
+    .audio-player {
       margin-top: 8px;
       max-width: 250px;
     }
@@ -575,7 +648,8 @@
     }
   }
 
-  .video-player {
+  .video-player,
+  .audio-player {
     margin-top: 8px;
   }
 }
@@ -651,6 +725,10 @@ a.status__display-name,
   color: inherit;
 }
 
+.detailed-status .button.logo-button {
+  margin-bottom: 15px;
+}
+
 .detailed-status__display-name {
   color: $secondary-text-color;
   display: block;
@@ -684,6 +762,7 @@ a.status__display-name,
 }
 
 .muted {
+  .status__content,
   .status__content p,
   .status__content a,
   .status__content__text {
@@ -895,67 +974,6 @@ a.status-card.compact:hover {
   object-fit: cover;
   background-size: cover;
   background-position: center center;
-}
-
-.status__video-player {
-  display: flex;
-  align-items: center;
-  background: $base-shadow-color;
-  box-sizing: border-box;
-  cursor: default; /* May not be needed */
-  margin-top: 8px;
-  overflow: hidden;
-  position: relative;
-
-  @include fullwidth-gallery;
-}
-
-.status__video-player-video {
-  height: 100%;
-  object-fit: contain;
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 100%;
-  z-index: 1;
-
-  &:not(.letterbox) {
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.status__video-player-expand,
-.status__video-player-mute {
-  color: $primary-text-color;
-  opacity: 0.8;
-  position: absolute;
-  right: 4px;
-  text-shadow: 0 1px 1px $base-shadow-color, 1px 0 1px $base-shadow-color;
-}
-
-.status__video-player-spoiler {
-  display: none;
-  color: $primary-text-color;
-  left: 4px;
-  position: absolute;
-  text-shadow: 0 1px 1px $base-shadow-color, 1px 0 1px $base-shadow-color;
-  top: 4px;
-  z-index: 100;
-
-  &.status__video-player-spoiler--visible {
-    display: block;
-  }
-}
-
-.status__video-player-expand {
-  bottom: 4px;
-  z-index: 100;
-}
-
-.status__video-player-mute {
-  top: 4px;
-  z-index: 5;
 }
 
 .attachment-list {

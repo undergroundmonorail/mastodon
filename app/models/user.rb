@@ -74,6 +74,7 @@ class User < ApplicationRecord
   has_many :applications, class_name: 'Doorkeeper::Application', as: :owner
   has_many :backups, inverse_of: :user
   has_many :invites, inverse_of: :user
+  has_many :markers, inverse_of: :user, dependent: :destroy
 
   has_one :invite_request, class_name: 'UserInviteRequest', inverse_of: :user, dependent: :destroy
   accepts_nested_attributes_for :invite_request, reject_if: ->(attributes) { attributes['text'].blank? }
@@ -107,8 +108,8 @@ class User < ApplicationRecord
   delegate :auto_play_gif, :default_sensitive, :unfollow_modal, :boost_modal, :favourite_modal, :delete_modal,
            :reduce_motion, :system_font_ui, :noindex, :flavour, :skin, :display_media, :hide_network, :hide_followers_count,
            :expand_spoilers, :default_language, :aggregate_reblogs, :show_application,
-           :advanced_layout, :use_blurhash, :use_pending_items, :trends,
-           :default_content_type,
+           :advanced_layout, :use_blurhash, :use_pending_items, :trends, :crop_images,
+           :default_content_type, :system_emoji_font,
            to: :settings, prefix: :setting, allow_nil: false
 
   attr_reader :invite_code
@@ -169,6 +170,10 @@ class User < ApplicationRecord
 
   def functional?
     confirmed? && approved? && !disabled? && !account.suspended?
+  end
+
+  def unconfirmed_or_pending?
+    !(confirmed? && approved?)
   end
 
   def inactive_message
@@ -260,17 +265,20 @@ class User < ApplicationRecord
   end
 
   def password_required?
-    return false if Devise.pam_authentication || Devise.ldap_authentication
+    return false if external?
+
     super
   end
 
   def send_reset_password_instructions
-    return false if encrypted_password.blank? && (Devise.pam_authentication || Devise.ldap_authentication)
+    return false if encrypted_password.blank?
+
     super
   end
 
   def reset_password!(new_password, new_password_confirmation)
-    return false if encrypted_password.blank? && (Devise.pam_authentication || Devise.ldap_authentication)
+    return false if encrypted_password.blank?
+
     super
   end
 
