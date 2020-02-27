@@ -39,6 +39,10 @@ class Publisher extends ImmutablePureComponent {
     sideArm: PropTypes.oneOf(['none', 'direct', 'private', 'unlisted', 'public']),
   };
 
+  handleSubmit = () => {
+    this.props.onSubmit();
+  };
+
   render () {
     const { countText, spoilerText, disabled, intl, onSecondarySubmit, onSubmit, privacy, sideArm } = this.props;
 
@@ -106,7 +110,7 @@ class Publisher extends ImmutablePureComponent {
             }
           }()}
           title={`${intl.formatMessage(messages.publish)}: ${intl.formatMessage({ id: `privacy.${privacy}.short` })}`}
-          onClick={onSubmit}
+          onClick={this.handleSubmit}
           disabled={statusLen === 0}
         />
       </div>
