@@ -5,6 +5,10 @@ require 'kramdown'
 require_relative './sanitize_config'
 
 class HTMLRenderer < Redcarpet::Render::HTML
+  def preprocess(document)
+    document.gsub(/^(\s*)(-|\+|\*) /, '\1\\\\\2 ').gsub(/^(\s*\d+)\. /, '\1\. ')
+  end
+
   def block_code(code, language)
     "<pre><code>#{encode(code).gsub("\n", "<br/>")}</code></pre>"
   end
