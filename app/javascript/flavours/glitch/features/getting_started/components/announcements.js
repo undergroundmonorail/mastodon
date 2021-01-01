@@ -15,6 +15,7 @@ import EmojiPickerDropdown from 'flavours/glitch/features/emoji_picker';
 import AnimatedNumber from 'flavours/glitch/components/animated_number';
 import TransitionMotion from 'react-motion/lib/TransitionMotion';
 import spring from 'react-motion/lib/spring';
+import { assetHost } from 'flavours/glitch/util/config';
 
 const messages = defineMessages({
   close: { id: 'lightbox.close', defaultMessage: 'Close' },
@@ -95,6 +96,10 @@ class Content extends ImmutablePureComponent {
       } else if (link.textContent[0] === '#' || (link.previousSibling && link.previousSibling.textContent && link.previousSibling.textContent[link.previousSibling.textContent.length - 1] === '#')) {
         link.addEventListener('click', this.onHashtagClick.bind(this, link.text), false);
       } else {
+        let status = this.props.announcement.get('statuses').find(item => link.href === item.get('url'));
+        if (status) {
+          link.addEventListener('click', this.onStatusClick.bind(this, status), false);
+        }
         link.setAttribute('title', link.href);
         link.classList.add('unhandled-link');
       }
@@ -120,6 +125,13 @@ class Content extends ImmutablePureComponent {
     }
   }
 
+  onStatusClick = (status, e) => {
+    if (this.context.router && e.button === 0 && !(e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      this.context.router.history.push(`/statuses/${status.get('id')}`);
+    }
+  }
+
   handleEmojiMouseEnter = ({ target }) => {
     target.src = target.getAttribute('data-original');
   }
@@ -141,8 +153,6 @@ class Content extends ImmutablePureComponent {
   }
 
 }
-
-const assetHost = process.env.CDN_HOST || '';
 
 class Emoji extends React.PureComponent {
 
@@ -366,6 +376,14 @@ class Announcements extends ImmutablePureComponent {
   state = {
     index: 0,
   };
+
+  static getDerivedStateFromProps(props, state) {
+    if (props.announcements.size > 0 && state.index >= props.announcements.size) {
+      return { index: props.announcements.size - 1 };
+    } else {
+      return null;
+    }
+  }
 
   componentDidMount () {
     this._markAnnouncementAsRead();

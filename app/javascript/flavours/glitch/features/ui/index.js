@@ -7,18 +7,19 @@ import { connect } from 'react-redux';
 import { Redirect, withRouter } from 'react-router-dom';
 import { isMobile } from 'flavours/glitch/util/is_mobile';
 import { debounce } from 'lodash';
-import { uploadCompose, resetCompose } from 'flavours/glitch/actions/compose';
+import { uploadCompose, resetCompose, changeComposeSpoilerness } from 'flavours/glitch/actions/compose';
 import { expandHomeTimeline } from 'flavours/glitch/actions/timelines';
 import { expandNotifications, notificationsSetVisibility } from 'flavours/glitch/actions/notifications';
 import { fetchFilters } from 'flavours/glitch/actions/filters';
 import { clearHeight } from 'flavours/glitch/actions/height_cache';
-import { submitMarkers, fetchMarkers } from 'flavours/glitch/actions/markers';
+import { synchronouslySubmitMarkers, submitMarkers, fetchMarkers } from 'flavours/glitch/actions/markers';
 import { WrappedSwitch, WrappedRoute } from 'flavours/glitch/util/react_router_helpers';
 import UploadArea from './components/upload_area';
 import PermaLink from 'flavours/glitch/components/permalink';
 import ColumnsAreaContainer from './containers/columns_area_container';
 import classNames from 'classnames';
 import Favico from 'favico.js';
+import PictureInPicture from 'flavours/glitch/features/picture_in_picture';
 import {
   Compose,
   Status,
@@ -81,6 +82,7 @@ const keyMap = {
   new: 'n',
   search: 's',
   forceNew: 'option+n',
+  toggleComposeSpoilers: 'option+x',
   focusColumn: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
   reply: 'r',
   favourite: 'f',
@@ -267,7 +269,7 @@ class UI extends React.Component {
   handleBeforeUnload = (e) => {
     const { intl, dispatch, hasComposingText, hasMediaAttachments } = this.props;
 
-    dispatch(submitMarkers());
+    dispatch(synchronouslySubmitMarkers());
 
     if (hasComposingText || hasMediaAttachments) {
       // Setting returnValue to any string causes confirmation dialog.
@@ -357,24 +359,12 @@ class UI extends React.Component {
   handleVisibilityChange = () => {
     const visibility = !document[this.visibilityHiddenProp];
     this.props.dispatch(notificationsSetVisibility(visibility));
+    if (visibility) {
+      this.props.dispatch(submitMarkers({ immediate: true }));
+    }
   }
 
   componentWillMount () {
-    if (typeof document.hidden !== 'undefined') { // Opera 12.10 and Firefox 18 and later support
-      this.visibilityHiddenProp = 'hidden';
-      this.visibilityChange = 'visibilitychange';
-    } else if (typeof document.msHidden !== 'undefined') {
-      this.visibilityHiddenProp = 'msHidden';
-      this.visibilityChange = 'msvisibilitychange';
-    } else if (typeof document.webkitHidden !== 'undefined') {
-      this.visibilityHiddenProp = 'webkitHidden';
-      this.visibilityChange = 'webkitvisibilitychange';
-    }
-    if (this.visibilityChange !== undefined) {
-      document.addEventListener(this.visibilityChange, this.handleVisibilityChange, false);
-      this.handleVisibilityChange();
-    }
-
     window.addEventListener('beforeunload', this.handleBeforeUnload, false);
     document.addEventListener('dragenter', this.handleDragEnter, false);
     document.addEventListener('dragover', this.handleDragOver, false);
@@ -398,6 +388,22 @@ class UI extends React.Component {
     this.hotkeys.__mousetrap__.stopCallback = (e, element) => {
       return ['TEXTAREA', 'SELECT', 'INPUT'].includes(element.tagName);
     };
+
+    if (typeof document.hidden !== 'undefined') { // Opera 12.10 and Firefox 18 and later support
+      this.visibilityHiddenProp = 'hidden';
+      this.visibilityChange = 'visibilitychange';
+    } else if (typeof document.msHidden !== 'undefined') {
+      this.visibilityHiddenProp = 'msHidden';
+      this.visibilityChange = 'msvisibilitychange';
+    } else if (typeof document.webkitHidden !== 'undefined') {
+      this.visibilityHiddenProp = 'webkitHidden';
+      this.visibilityChange = 'webkitvisibilitychange';
+    }
+
+    if (this.visibilityChange !== undefined) {
+      document.addEventListener(this.visibilityChange, this.handleVisibilityChange, false);
+      this.handleVisibilityChange();
+    }
   }
 
   componentDidUpdate (prevProps) {
@@ -453,6 +459,11 @@ class UI extends React.Component {
   handleHotkeyForceNew = e => {
     this.handleHotkeyNew(e);
     this.props.dispatch(resetCompose());
+  }
+
+  handleHotkeyToggleComposeSpoilers = e => {
+    e.preventDefault();
+    this.props.dispatch(changeComposeSpoilerness());
   }
 
   handleHotkeyFocusColumn = e => {
@@ -569,6 +580,7 @@ class UI extends React.Component {
       new: this.handleHotkeyNew,
       search: this.handleHotkeySearch,
       forceNew: this.handleHotkeyForceNew,
+      toggleComposeSpoilers: this.handleHotkeyToggleComposeSpoilers,
       focusColumn: this.handleHotkeyFocusColumn,
       back: this.handleHotkeyBack,
       goToHome: this.handleHotkeyGoToHome,
@@ -603,6 +615,7 @@ class UI extends React.Component {
             {children}
           </SwitchingColumnsArea>
 
+          <PictureInPicture />
           <NotificationsContainer />
           <LoadingBarContainer className='loading-bar' />
           <ModalContainer />

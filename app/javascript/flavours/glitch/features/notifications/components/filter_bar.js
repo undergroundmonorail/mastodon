@@ -9,6 +9,7 @@ const tooltips = defineMessages({
   boosts: { id: 'notifications.filter.boosts', defaultMessage: 'Boosts' },
   polls: { id: 'notifications.filter.polls', defaultMessage: 'Poll results' },
   follows: { id: 'notifications.filter.follows', defaultMessage: 'Follows' },
+  statuses: { id: 'notifications.filter.statuses', defaultMessage: 'Updates from people you follow' },
 });
 
 export default @injectIntl
@@ -71,7 +72,7 @@ class FilterBar extends React.PureComponent {
           onClick={this.onClick('favourite')}
           title={intl.formatMessage(tooltips.favourites)}
         >
-          <i className='fa fa-fw fa-heart' />
+          <Icon id='heart' fixedWidth />
         </button>
         <button
           className={selectedFilter === 'reblog' ? 'active' : ''}
@@ -86,6 +87,13 @@ class FilterBar extends React.PureComponent {
           title={intl.formatMessage(tooltips.polls)}
         >
           <Icon id='tasks' fixedWidth />
+        </button>
+        <button
+          className={selectedFilter === 'status' ? 'active' : ''}
+          onClick={this.onClick('status')}
+          title={intl.formatMessage(tooltips.statuses)}
+        >
+          <Icon id='home' fixedWidth />
         </button>
         <button
           className={selectedFilter === 'follow' ? 'active' : ''}

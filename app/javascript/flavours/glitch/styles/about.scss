@@ -545,13 +545,6 @@ $small-breakpoint: 960px;
         flex: 0 0 auto;
       }
 
-      &__avatar {
-        width: 44px;
-        height: 44px;
-        background-size: 44px 44px;
-        @include avatar-size(44px);
-      }
-
       .display-name {
         font-size: 15px;
 
@@ -741,6 +734,7 @@ $small-breakpoint: 960px;
 
       &__column {
         flex: 1 1 50%;
+        overflow-x: hidden;
       }
     }
 
@@ -752,16 +746,15 @@ $small-breakpoint: 960px;
         display: flex;
         align-items: center;
       }
+    }
 
-      .account__avatar {
-        width: 44px;
-        height: 44px;
-        background-size: 44px 44px;
-      }
+    &__counters__wrapper {
+      display: flex;
     }
 
     &__counter {
       padding: 10px;
+      width: 50%;
 
       strong {
         font-family: $font-display, sans-serif;

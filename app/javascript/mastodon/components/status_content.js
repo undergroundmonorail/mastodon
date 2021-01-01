@@ -1,7 +1,6 @@
 import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import PropTypes from 'prop-types';
-import { isRtl } from '../rtl';
 import { FormattedMessage } from 'react-intl';
 import Permalink from './permalink';
 import classnames from 'classnames';
@@ -20,6 +19,7 @@ export default class StatusContent extends React.PureComponent {
   static propTypes = {
     status: ImmutablePropTypes.map.isRequired,
     expanded: PropTypes.bool,
+    showThread: PropTypes.bool,
     onExpandedToggle: PropTypes.func,
     onClick: PropTypes.func,
     collapsable: PropTypes.bool,
@@ -181,19 +181,21 @@ export default class StatusContent extends React.PureComponent {
 
     const hidden = this.props.onExpandedToggle ? !this.props.expanded : this.state.hidden;
     const renderReadMore = this.props.onClick && status.get('collapsed');
+    const renderViewThread = this.props.showThread && status.get('in_reply_to_id') && status.get('in_reply_to_account_id') === status.getIn(['account', 'id']);
 
     const content = { __html: status.get('contentHtml') };
     const spoilerContent = { __html: status.get('spoilerHtml') };
-    const directionStyle = { direction: 'ltr' };
     const classNames = classnames('status__content', {
       'status__content--with-action': this.props.onClick && this.context.router,
       'status__content--with-spoiler': status.get('spoiler_text').length > 0,
       'status__content--collapsed': renderReadMore,
     });
 
-    if (isRtl(status.get('search_index'))) {
-      directionStyle.direction = 'rtl';
-    }
+    const showThreadButton = (
+      <button className='status__content__read-more-button' onClick={this.props.onClick}>
+        <FormattedMessage id='status.show_thread' defaultMessage='Show thread' />
+      </button>
+    );
 
     const readMoreButton = (
       <button className='status__content__read-more-button' onClick={this.props.onClick} key='read-more'>
@@ -217,7 +219,7 @@ export default class StatusContent extends React.PureComponent {
       }
 
       return (
-        <div className={classNames} ref={this.setRef} tabIndex='0' style={directionStyle} onMouseDown={this.handleMouseDown} onMouseUp={this.handleMouseUp}>
+        <div className={classNames} ref={this.setRef} tabIndex='0' onMouseDown={this.handleMouseDown} onMouseUp={this.handleMouseUp}>
           <p style={{ marginBottom: hidden && status.get('mentions').isEmpty() ? '0px' : null }}>
             <span dangerouslySetInnerHTML={spoilerContent} />
             {' '}
@@ -226,17 +228,21 @@ export default class StatusContent extends React.PureComponent {
 
           {mentionsPlaceholder}
 
-          <div tabIndex={!hidden ? 0 : null} className={`status__content__text ${!hidden ? 'status__content__text--visible' : ''}`} style={directionStyle} dangerouslySetInnerHTML={content} />
+          <div tabIndex={!hidden ? 0 : null} className={`status__content__text ${!hidden ? 'status__content__text--visible' : ''}`} dangerouslySetInnerHTML={content} />
 
           {!hidden && !!status.get('poll') && <PollContainer pollId={status.get('poll')} />}
+
+          {renderViewThread && showThreadButton}
         </div>
       );
     } else if (this.props.onClick) {
       const output = [
-        <div className={classNames} ref={this.setRef} tabIndex='0' style={directionStyle} onMouseDown={this.handleMouseDown} onMouseUp={this.handleMouseUp} key='status-content'>
-          <div className='status__content__text status__content__text--visible' style={directionStyle} dangerouslySetInnerHTML={content} />
+        <div className={classNames} ref={this.setRef} tabIndex='0' onMouseDown={this.handleMouseDown} onMouseUp={this.handleMouseUp} key='status-content'>
+          <div className='status__content__text status__content__text--visible' dangerouslySetInnerHTML={content} />
 
           {!!status.get('poll') && <PollContainer pollId={status.get('poll')} />}
+
+          {renderViewThread && showThreadButton}
         </div>,
       ];
 
@@ -247,10 +253,12 @@ export default class StatusContent extends React.PureComponent {
       return output;
     } else {
       return (
-        <div className={classNames} ref={this.setRef} tabIndex='0' style={directionStyle}>
-          <div className='status__content__text status__content__text--visible' style={directionStyle} dangerouslySetInnerHTML={content} />
+        <div className={classNames} ref={this.setRef} tabIndex='0'>
+          <div className='status__content__text status__content__text--visible' dangerouslySetInnerHTML={content} />
 
           {!!status.get('poll') && <PollContainer pollId={status.get('poll')} />}
+
+          {renderViewThread && showThreadButton}
         </div>
       );
     }

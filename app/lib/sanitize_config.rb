@@ -18,6 +18,7 @@ class Sanitize
       gopher
       xmpp
       magnet
+      gemini
     ).freeze
 
     CLASS_WHITELIST_TRANSFORMER = lambda do |env|
@@ -54,6 +55,18 @@ class Sanitize
       end
     end
 
+    LINK_REL_TRANSFORMER = lambda do |env|
+      return unless env[:node_name] == 'a' and env[:node]['href']
+
+      node = env[:node]
+
+      rel = (node['rel'] || '').split(' ') & ['tag']
+      unless env[:config][:outgoing] && TagManager.instance.local_url?(node['href'])
+        rel += ['nofollow', 'noopener', 'noreferrer']
+      end
+      node['rel'] = rel.join(' ')
+    end
+
     UNSUPPORTED_HREF_TRANSFORMER = lambda do |env|
       return unless env[:node_name] == 'a'
 
@@ -74,13 +87,16 @@ class Sanitize
       elements: %w(p br span a abbr del pre blockquote code b strong u sub sup i em h1 h2 h3 h4 h5 ul ol li),
 
       attributes: {
-        'a'    => %w(href rel class alt title),
-        'span' => %w(class),
+        'a'          => %w(href rel class title),
+        'span'       => %w(class),
+        'abbr'       => %w(title),
+        'blockquote' => %w(cite),
+        'ol'         => %w(start reversed),
+        'li'         => %w(value),
       },
 
       add_attributes: {
         'a' => {
-          'rel' => 'nofollow noopener tag noreferrer',
           'target' => '_blank',
         },
       },
@@ -94,6 +110,7 @@ class Sanitize
         CLASS_WHITELIST_TRANSFORMER,
         IMG_TAG_TRANSFORMER,
         UNSUPPORTED_HREF_TRANSFORMER,
+        LINK_REL_TRANSFORMER,
       ]
     )
 

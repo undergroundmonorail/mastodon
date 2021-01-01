@@ -16,7 +16,11 @@ export default class VideoModal extends ImmutablePureComponent {
   static propTypes = {
     media: ImmutablePropTypes.map.isRequired,
     status: ImmutablePropTypes.map,
-    time: PropTypes.number,
+    options: PropTypes.shape({
+      startTime: PropTypes.number,
+      autoPlay: PropTypes.bool,
+      defaultVolume: PropTypes.number,
+    }),
     onClose: PropTypes.func.isRequired,
   };
 
@@ -28,16 +32,20 @@ export default class VideoModal extends ImmutablePureComponent {
   }
 
   render () {
-    const { media, status, time, onClose } = this.props;
+    const { media, status, onClose } = this.props;
+    const options = this.props.options || {};
 
     return (
       <div className='modal-root__modal video-modal'>
         <div className='video-modal__container'>
           <Video
             preview={media.get('preview_url')}
+            frameRate={media.getIn(['meta', 'original', 'frame_rate'])}
             blurhash={media.get('blurhash')}
             src={media.get('url')}
-            startTime={time}
+            currentTime={options.startTime}
+            autoPlay={options.autoPlay}
+            volume={options.defaultVolume}
             onCloseVideo={onClose}
             detailed
             alt={media.get('description')}

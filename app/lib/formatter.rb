@@ -16,6 +16,8 @@ class HTMLRenderer < Redcarpet::Render::HTML
   def autolink(link, link_type)
     return link if link_type == :email
     Formatter.instance.link_url(link)
+  rescue Addressable::URI::InvalidURIError, IDN::Idna::IdnaError
+    encode(link)
   end
 
   private
@@ -64,7 +66,7 @@ class Formatter
     html = "RT @#{prepend_reblog} #{html}" if prepend_reblog
     html = format_markdown(html) if status.content_type == 'text/markdown'
     html = encode_and_link_urls(html, linkable_accounts, keep_html: %w(text/markdown text/html).include?(status.content_type))
-    html = reformat(html) if %w(text/markdown text/html).include?(status.content_type)
+    html = reformat(html, true) if %w(text/markdown text/html).include?(status.content_type)
     html = encode_custom_emojis(html, status.emojis, options[:autoplay]) if options[:custom_emojify]
 
     unless %w(text/markdown text/html).include?(status.content_type)
@@ -80,8 +82,8 @@ class Formatter
     html.delete("\r").delete("\n")
   end
 
-  def reformat(html)
-    sanitize(html, Sanitize::Config::MASTODON_STRICT)
+  def reformat(html, outgoing = false)
+    sanitize(html, Sanitize::Config::MASTODON_STRICT.merge(outgoing: outgoing))
   rescue ArgumentError
     ''
   end
@@ -135,7 +137,7 @@ class Formatter
   end
 
   def link_url(url)
-    "<a href=\"#{encode(url)}\" target=\"blank\" rel=\"nofollow noopener\">#{link_html(url)}</a>"
+    "<a href=\"#{encode(url)}\" target=\"blank\" rel=\"nofollow noopener noreferrer\">#{link_html(url)}</a>"
   end
 
   private
@@ -202,6 +204,7 @@ class Formatter
     end
   end
 
+  # rubocop:disable Metrics/BlockNesting
   def encode_custom_emojis(html, emojis, animate = false)
     return html if emojis.empty?
 
@@ -256,6 +259,7 @@ class Formatter
 
     html
   end
+  # rubocop:enable Metrics/BlockNesting
 
   def rewrite(text, entities, keep_html = false)
     text = text.to_s
