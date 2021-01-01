@@ -19,9 +19,9 @@ const getRegex = createSelector([
   return regex;
 });
 
-const makeGetStatusIds = () => createSelector([
+const makeGetStatusIds = (pending = false) => createSelector([
   (state, { type }) => state.getIn(['settings', type], ImmutableMap()),
-  (state, { type }) => state.getIn(['timelines', type, 'items'], ImmutableList()),
+  (state, { type }) => state.getIn(['timelines', type, pending ? 'pendingItems' : 'items'], ImmutableList()),
   (state)           => state.get('statuses'),
   getRegex,
 ], (columnSettings, statusIds, statuses, regex) => {
@@ -32,6 +32,8 @@ const makeGetStatusIds = () => createSelector([
 
     const statusForId = statuses.get(id);
     let showStatus    = true;
+
+    if (statusForId.get('account') === me) return true;
 
     if (columnSettings.getIn(['shows', 'reblog']) === false) {
       showStatus = showStatus && statusForId.get('reblog') === null;
@@ -45,7 +47,7 @@ const makeGetStatusIds = () => createSelector([
       showStatus = showStatus && statusForId.get('visibility') !== 'direct';
     }
 
-    if (showStatus && regex && statusForId.get('account') !== me) {
+    if (showStatus && regex) {
       const searchIndex = statusForId.get('reblog') ? statuses.getIn([statusForId.get('reblog'), 'search_index']) : statusForId.get('search_index');
       showStatus = !regex.test(searchIndex);
     }
@@ -56,13 +58,14 @@ const makeGetStatusIds = () => createSelector([
 
 const makeMapStateToProps = () => {
   const getStatusIds = makeGetStatusIds();
+  const getPendingStatusIds = makeGetStatusIds(true);
 
   const mapStateToProps = (state, { timelineId }) => ({
     statusIds: getStatusIds(state, { type: timelineId }),
     isLoading: state.getIn(['timelines', timelineId, 'isLoading'], true),
     isPartial: state.getIn(['timelines', timelineId, 'isPartial'], false),
     hasMore:   state.getIn(['timelines', timelineId, 'hasMore']),
-    numPending: state.getIn(['timelines', timelineId, 'pendingItems'], ImmutableList()).size,
+    numPending: getPendingStatusIds(state, { type: timelineId }).size,
   });
 
   return mapStateToProps;

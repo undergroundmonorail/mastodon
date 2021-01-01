@@ -38,8 +38,12 @@ class Publisher extends ImmutablePureComponent {
     sideArm: PropTypes.oneOf(['none', 'direct', 'private', 'unlisted', 'public']),
   };
 
+  handleSubmit = () => {
+    this.props.onSubmit();
+  };
+
   render () {
-    const { countText, disabled, intl, onSecondarySubmit, onSubmit, privacy, sideArm } = this.props;
+    const { countText, disabled, intl, onSecondarySubmit, privacy, sideArm } = this.props;
 
     const diff = maxChars - length(countText || '');
     const computedClass = classNames('composer--publisher', {
@@ -49,7 +53,6 @@ class Publisher extends ImmutablePureComponent {
 
     return (
       <div className={computedClass}>
-        <span className='count'>{diff}</span>
         {sideArm && sideArm !== 'none' ? (
           <Button
             className='side_arm'
@@ -59,7 +62,7 @@ class Publisher extends ImmutablePureComponent {
             text={
               <span>
                 <Icon
-                  icon={{
+                  id={{
                     public: 'globe',
                     unlisted: 'unlock',
                     private: 'lock',
@@ -81,7 +84,7 @@ class Publisher extends ImmutablePureComponent {
               return (
                 <span>
                   <Icon
-                    icon={{
+                    id={{
                       direct: 'envelope',
                       private: 'lock',
                       public: 'globe',
@@ -106,7 +109,7 @@ class Publisher extends ImmutablePureComponent {
             }
           }()}
           title={`${intl.formatMessage(messages.publish)}: ${intl.formatMessage({ id: `privacy.${privacy}.short` })}`}
-          onClick={onSubmit}
+          onClick={this.handleSubmit}
           disabled={disabled || diff < 0}
         />
       </div>

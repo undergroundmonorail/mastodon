@@ -12,8 +12,9 @@
 
 class DomainAllow < ApplicationRecord
   include DomainNormalizable
+  include DomainMaterializable
 
-  validates :domain, presence: true, uniqueness: true
+  validates :domain, presence: true, uniqueness: true, domain: true
 
   scope :matches_domain, ->(value) { where(arel_table[:domain].matches("%#{value}%")) }
 

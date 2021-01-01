@@ -12,11 +12,24 @@ import BundleContainer from '../containers/bundle_container';
 import ColumnLoading from './column_loading';
 import DrawerLoading from './drawer_loading';
 import BundleColumnError from './bundle_column_error';
-import { Compose, Notifications, HomeTimeline, CommunityTimeline, PublicTimeline, HashtagTimeline, DirectTimeline, FavouritedStatuses, BookmarkedStatuses, ListTimeline } from 'flavours/glitch/util/async-components';
+import {
+  Compose,
+  Notifications,
+  HomeTimeline,
+  CommunityTimeline,
+  PublicTimeline,
+  HashtagTimeline,
+  DirectTimeline,
+  FavouritedStatuses,
+  BookmarkedStatuses,
+  ListTimeline,
+  Directory,
+} from 'flavours/glitch/util/async-components';
+import Icon from 'flavours/glitch/components/icon';
 import ComposePanel from './compose_panel';
 import NavigationPanel from './navigation_panel';
 
-import detectPassiveEvents from 'detect-passive-events';
+import { supportsPassiveEvents } from 'detect-passive-events';
 import { scrollRight } from 'flavours/glitch/util/scroll';
 
 const componentMap = {
@@ -24,12 +37,14 @@ const componentMap = {
   'HOME': HomeTimeline,
   'NOTIFICATIONS': Notifications,
   'PUBLIC': PublicTimeline,
+  'REMOTE': PublicTimeline,
   'COMMUNITY': CommunityTimeline,
   'HASHTAG': HashtagTimeline,
   'DIRECT': DirectTimeline,
   'FAVOURITES': FavouritedStatuses,
   'BOOKMARKS': BookmarkedStatuses,
   'LIST': ListTimeline,
+  'DIRECTORY': Directory,
 };
 
 const shouldHideFAB = path => path.match(/^\/statuses\/|^\/search|^\/getting-started/);
@@ -38,8 +53,8 @@ const messages = defineMessages({
   publish: { id: 'compose_form.publish', defaultMessage: 'Toot' },
 });
 
-@component => injectIntl(component, { withRef: true })
-export default class ColumnsArea extends ImmutablePureComponent {
+export default @(component => injectIntl(component, { withRef: true }))
+class ColumnsArea extends ImmutablePureComponent {
 
   static contextTypes = {
     router: PropTypes.object.isRequired,
@@ -60,12 +75,14 @@ export default class ColumnsArea extends ImmutablePureComponent {
   }
 
   componentWillReceiveProps() {
-    this.setState({ shouldAnimate: false });
+    if (typeof this.pendingIndex !== 'number' && this.lastIndex !== getIndex(this.context.router.history.location.pathname)) {
+      this.setState({ shouldAnimate: false });
+    }
   }
 
   componentDidMount() {
     if (!this.props.singleColumn) {
-      this.node.addEventListener('wheel', this.handleWheel,  detectPassiveEvents.hasSupport ? { passive: true } : false);
+      this.node.addEventListener('wheel', this.handleWheel, supportsPassiveEvents ? { passive: true } : false);
     }
 
     this.lastIndex   = getIndex(this.context.router.history.location.pathname);
@@ -82,10 +99,15 @@ export default class ColumnsArea extends ImmutablePureComponent {
 
   componentDidUpdate(prevProps) {
     if (this.props.singleColumn !== prevProps.singleColumn && !this.props.singleColumn) {
-      this.node.addEventListener('wheel', this.handleWheel,  detectPassiveEvents.hasSupport ? { passive: true } : false);
+      this.node.addEventListener('wheel', this.handleWheel, supportsPassiveEvents ? { passive: true } : false);
     }
-    this.lastIndex = getIndex(this.context.router.history.location.pathname);
-    this.setState({ shouldAnimate: true });
+
+    const newIndex = getIndex(this.context.router.history.location.pathname);
+
+    if (this.lastIndex !== newIndex) {
+      this.lastIndex = newIndex;
+      this.setState({ shouldAnimate: true });
+    }
   }
 
   componentWillUnmount () {
@@ -169,10 +191,10 @@ export default class ColumnsArea extends ImmutablePureComponent {
     const columnIndex = getIndex(this.context.router.history.location.pathname);
 
     if (singleColumn) {
-      const floatingActionButton = shouldHideFAB(this.context.router.history.location.pathname) ? null : <Link key='floating-action-button' to='/statuses/new' className='floating-action-button' aria-label={intl.formatMessage(messages.publish)}><i className='fa fa-pencil' /></Link>;
+      const floatingActionButton = shouldHideFAB(this.context.router.history.location.pathname) ? null : <Link key='floating-action-button' to='/statuses/new' className='floating-action-button' aria-label={intl.formatMessage(messages.publish)}><Icon id='pencil' /></Link>;
 
       const content = columnIndex !== -1 ? (
-        <ReactSwipeableViews key='content' index={columnIndex} onChangeIndex={this.handleSwipe} onTransitionEnd={this.handleAnimationEnd} animateTransitions={shouldAnimate} springConfig={{ duration: '400ms', delay: '0s', easeFunction: 'ease' }} style={{ height: '100%' }} disabled={!swipeToChangeColumns}>
+        <ReactSwipeableViews key='content' hysteresis={0.2} threshold={15} index={columnIndex} onChangeIndex={this.handleSwipe} onTransitionEnd={this.handleAnimationEnd} animateTransitions={shouldAnimate} springConfig={{ duration: '400ms', delay: '0s', easeFunction: 'ease' }} style={{ height: '100%' }} disabled={!swipeToChangeColumns}>
           {links.map(this.renderView)}
         </ReactSwipeableViews>
       ) : (

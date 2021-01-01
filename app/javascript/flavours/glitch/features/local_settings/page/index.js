@@ -25,10 +25,15 @@ const messages = defineMessages({
   filters_upstream: { id: 'settings.filtering_behavior.upstream', defaultMessage: 'Show "filtered" like vanilla Mastodon' },
   filters_hide: { id: 'settings.filtering_behavior.hide', defaultMessage: 'Show "filtered" and add a button to display why' },
   filters_cw: { id: 'settings.filtering_behavior.cw', defaultMessage: 'Still display the post, and add filtered words to content warning' },
+  rewrite_mentions_no: { id: 'settings.rewrite_mentions_no', defaultMessage: 'Do not rewrite mentions' },
+  rewrite_mentions_acct: { id: 'settings.rewrite_mentions_acct', defaultMessage: 'Rewrite with username and domain (when the account is remote)' },
+  rewrite_mentions_username: { id: 'settings.rewrite_mentions_username', defaultMessage:  'Rewrite with username' },
+  pop_in_left: { id: 'settings.pop_in_left', defaultMessage: 'Left' },
+  pop_in_right: { id: 'settings.pop_in_right', defaultMessage:  'Right' },
 });
 
-@injectIntl
-export default class LocalSettingsPage extends React.PureComponent {
+export default @injectIntl
+class LocalSettingsPage extends React.PureComponent {
 
   static propTypes = {
     index    : PropTypes.number,
@@ -75,6 +80,19 @@ export default class LocalSettingsPage extends React.PureComponent {
           <FormattedMessage id='settings.tag_misleading_links' defaultMessage='Tag misleading links' />
           <span className='hint'><FormattedMessage id='settings.tag_misleading_links.hint' defaultMessage="Add a visual indication with the link target host to every link not mentioning it explicitly" /></span>
         </LocalSettingsPageItem>
+        <LocalSettingsPageItem
+          settings={settings}
+          item={['rewrite_mentions']}
+          id='mastodon-settings--rewrite_mentions'
+          options={[
+            { value: 'no', message: intl.formatMessage(messages.rewrite_mentions_no) },
+            { value: 'acct', message: intl.formatMessage(messages.rewrite_mentions_acct) },
+            { value: 'username', message: intl.formatMessage(messages.rewrite_mentions_username) },
+          ]}
+          onChange={onChange}
+        >
+          <FormattedMessage id='settings.rewrite_mentions' defaultMessage='Rewrite mentions in displayed statuses' />
+        </LocalSettingsPageItem>
         <section>
           <h2><FormattedMessage id='settings.notifications_opts' defaultMessage='Notifications options' /></h2>
           <LocalSettingsPageItem
@@ -94,6 +112,14 @@ export default class LocalSettingsPage extends React.PureComponent {
           >
             <FormattedMessage id='settings.notifications.favicon_badge' defaultMessage='Unread notifications favicon badge' />
             <span className='hint'><FormattedMessage id='settings.notifications.favicon_badge.hint' defaultMessage="Add a badge for unread notifications to the favicon" /></span>
+          </LocalSettingsPageItem>
+          <LocalSettingsPageItem
+            settings={settings}
+            item={['notifications', 'show_unread']}
+            id='mastodon-settings--notifications-show_unread'
+            onChange={onChange}
+          >
+            <FormattedMessage id='settings.notifications.show_unread' defaultMessage='Show unread marker' />
           </LocalSettingsPageItem>
         </section>
         <section>
@@ -149,6 +175,14 @@ export default class LocalSettingsPage extends React.PureComponent {
           onChange={onChange}
         >
           <FormattedMessage id='settings.always_show_spoilers_field' defaultMessage='Always enable the Content Warning field' />
+        </LocalSettingsPageItem>
+        <LocalSettingsPageItem
+          settings={settings}
+          item={['prepend_cw_re']}
+          id='mastodon-settings--prepend_cw_re'
+          onChange={onChange}
+        >
+          <FormattedMessage id='settings.prepend_cw_re' defaultMessage='Prepend “re: ” to content warnings when replying' />
         </LocalSettingsPageItem>
         <LocalSettingsPageItem
           settings={settings}
@@ -360,7 +394,7 @@ export default class LocalSettingsPage extends React.PureComponent {
         </section>
       </div>
     ),
-    ({ onChange, settings }) => (
+    ({ intl, onChange, settings }) => (
       <div className='glitch local-settings__page media'>
         <h1><FormattedMessage id='settings.media' defaultMessage='Media' /></h1>
         <LocalSettingsPageItem
@@ -395,6 +429,27 @@ export default class LocalSettingsPage extends React.PureComponent {
           onChange={onChange}
         >
           <FormattedMessage id='settings.media_reveal_behind_cw' defaultMessage='Reveal sensitive media behind a CW by default' />
+        </LocalSettingsPageItem>
+        <LocalSettingsPageItem
+          settings={settings}
+          item={['media', 'pop_in_player']}
+          id='mastodon-settings--pop-in-player'
+          onChange={onChange}
+        >
+          <FormattedMessage id='settings.pop_in_player' defaultMessage='Enable pop-in player' />
+        </LocalSettingsPageItem>
+        <LocalSettingsPageItem
+          settings={settings}
+          item={['media', 'pop_in_position']}
+          id='mastodon-settings--pop-in-position'
+          options={[
+            { value: 'left', message: intl.formatMessage(messages.pop_in_left) },
+            { value: 'right', message: intl.formatMessage(messages.pop_in_right) },
+          ]}
+          onChange={onChange}
+          dependsOn={[['media', 'pop_in_player']]}
+        >
+          <FormattedMessage id='settings.pop_in_position' defaultMessage='Pop-in player position:' />
         </LocalSettingsPageItem>
       </div>
     ),

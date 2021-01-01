@@ -1,6 +1,10 @@
 ---
 tr:
   activerecord:
+    attributes:
+      poll:
+        expires_at: Bitiş zamanı
+        options: Seçenekler
     errors:
       models:
         account:

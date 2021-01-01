@@ -4,7 +4,15 @@ import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import Column from '../../components/column';
 import ColumnHeader from '../../components/column_header';
-import { expandNotifications, scrollTopNotifications, loadPending } from '../../actions/notifications';
+import {
+  expandNotifications,
+  scrollTopNotifications,
+  loadPending,
+  mountNotifications,
+  unmountNotifications,
+  markNotificationsAsRead,
+} from '../../actions/notifications';
+import { submitMarkers } from '../../actions/markers';
 import { addColumn, removeColumn, moveColumn } from '../../actions/columns';
 import NotificationContainer from './containers/notification_container';
 import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
@@ -15,15 +23,25 @@ import { List as ImmutableList } from 'immutable';
 import { debounce } from 'lodash';
 import ScrollableList from '../../components/scrollable_list';
 import LoadGap from '../../components/load_gap';
+import Icon from 'mastodon/components/icon';
+import compareId from 'mastodon/compare_id';
+import NotificationsPermissionBanner from './components/notifications_permission_banner';
 
 const messages = defineMessages({
   title: { id: 'column.notifications', defaultMessage: 'Notifications' },
+  markAsRead : { id: 'notifications.mark_as_read', defaultMessage: 'Mark every notification as read' },
+});
+
+const getExcludedTypes = createSelector([
+  state => state.getIn(['settings', 'notifications', 'shows']),
+], (shows) => {
+  return ImmutableList(shows.filter(item => !item).keys());
 });
 
 const getNotifications = createSelector([
   state => state.getIn(['settings', 'notifications', 'quickFilter', 'show']),
   state => state.getIn(['settings', 'notifications', 'quickFilter', 'active']),
-  state => ImmutableList(state.getIn(['settings', 'notifications', 'shows']).filter(item => !item).keys()),
+  getExcludedTypes,
   state => state.getIn(['notifications', 'items']),
 ], (showFilterBar, allowedType, excludedTypes, notifications) => {
   if (!showFilterBar || allowedType === 'all') {
@@ -32,16 +50,19 @@ const getNotifications = createSelector([
     // we need to turn it off for FilterBar in order not to block ourselves from seeing a specific category
     return notifications.filterNot(item => item !== null && excludedTypes.includes(item.get('type')));
   }
-  return notifications.filter(item => item !== null && allowedType === item.get('type'));
+  return notifications.filter(item => item === null || allowedType === item.get('type'));
 });
 
 const mapStateToProps = state => ({
   showFilterBar: state.getIn(['settings', 'notifications', 'quickFilter', 'show']),
   notifications: getNotifications(state),
   isLoading: state.getIn(['notifications', 'isLoading'], true),
-  isUnread: state.getIn(['notifications', 'unread']) > 0,
+  isUnread: state.getIn(['notifications', 'unread']) > 0 || state.getIn(['notifications', 'pendingItems']).size > 0,
   hasMore: state.getIn(['notifications', 'hasMore']),
   numPending: state.getIn(['notifications', 'pendingItems'], ImmutableList()).size,
+  lastReadId: state.getIn(['notifications', 'readMarkerId']),
+  canMarkAsRead: state.getIn(['notifications', 'readMarkerId']) !== '0' && getNotifications(state).some(item => item !== null && compareId(item.get('id'), state.getIn(['notifications', 'readMarkerId'])) > 0),
+  needsNotificationPermission: state.getIn(['settings', 'notifications', 'alerts']).includes(true) && state.getIn(['notifications', 'browserSupport']) && state.getIn(['notifications', 'browserPermission']) === 'default' && !state.getIn(['settings', 'notifications', 'dismissPermissionBanner']),
 });
 
 export default @connect(mapStateToProps)
@@ -60,17 +81,25 @@ class Notifications extends React.PureComponent {
     multiColumn: PropTypes.bool,
     hasMore: PropTypes.bool,
     numPending: PropTypes.number,
+    lastReadId: PropTypes.string,
+    canMarkAsRead: PropTypes.bool,
+    needsNotificationPermission: PropTypes.bool,
   };
 
   static defaultProps = {
     trackScroll: true,
   };
 
+  componentWillMount() {
+    this.props.dispatch(mountNotifications());
+  }
+
   componentWillUnmount () {
     this.handleLoadOlder.cancel();
     this.handleScrollToTop.cancel();
     this.handleScroll.cancel();
     this.props.dispatch(scrollTopNotifications(false));
+    this.props.dispatch(unmountNotifications());
   }
 
   handleLoadGap = (maxId) => {
@@ -141,8 +170,13 @@ class Notifications extends React.PureComponent {
     }
   }
 
+  handleMarkAsRead = () => {
+    this.props.dispatch(markNotificationsAsRead());
+    this.props.dispatch(submitMarkers({ immediate: true }));
+  };
+
   render () {
-    const { intl, notifications, shouldUpdateScroll, isLoading, isUnread, columnId, multiColumn, hasMore, numPending, showFilterBar } = this.props;
+    const { intl, notifications, shouldUpdateScroll, isLoading, isUnread, columnId, multiColumn, hasMore, numPending, showFilterBar, lastReadId, canMarkAsRead, needsNotificationPermission } = this.props;
     const pinned = !!columnId;
     const emptyMessage = <FormattedMessage id='empty_column.notifications' defaultMessage="You don't have any notifications yet. Interact with others to start the conversation." />;
 
@@ -169,6 +203,7 @@ class Notifications extends React.PureComponent {
           accountId={item.get('account')}
           onMoveUp={this.handleMoveUp}
           onMoveDown={this.handleMoveDown}
+          unread={lastReadId !== '0' && compareId(item.get('id'), lastReadId) > 0}
         />
       ));
     } else {
@@ -185,6 +220,8 @@ class Notifications extends React.PureComponent {
         showLoading={isLoading && notifications.size === 0}
         hasMore={hasMore}
         numPending={numPending}
+        prepend={needsNotificationPermission && <NotificationsPermissionBanner />}
+        alwaysPrepend
         emptyMessage={emptyMessage}
         onLoadMore={this.handleLoadOlder}
         onLoadPending={this.handleLoadPending}
@@ -197,6 +234,21 @@ class Notifications extends React.PureComponent {
       </ScrollableList>
     );
 
+    let extraButton = null;
+
+    if (canMarkAsRead) {
+      extraButton = (
+        <button
+          aria-label={intl.formatMessage(messages.markAsRead)}
+          title={intl.formatMessage(messages.markAsRead)}
+          onClick={this.handleMarkAsRead}
+          className='column-header__button'
+        >
+          <Icon id='check' />
+        </button>
+      );
+    }
+
     return (
       <Column bindToDocument={!multiColumn} ref={this.setColumnRef} label={intl.formatMessage(messages.title)}>
         <ColumnHeader
@@ -208,6 +260,7 @@ class Notifications extends React.PureComponent {
           onClick={this.handleHeaderClick}
           pinned={pinned}
           multiColumn={multiColumn}
+          extraButton={extraButton}
         >
           <ColumnSettingsContainer />
         </ColumnHeader>

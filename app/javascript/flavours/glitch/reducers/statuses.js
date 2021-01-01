@@ -3,6 +3,7 @@ import {
   REBLOG_FAIL,
   FAVOURITE_REQUEST,
   FAVOURITE_FAIL,
+  UNFAVOURITE_SUCCESS,
   BOOKMARK_REQUEST,
   BOOKMARK_FAIL,
 } from 'flavours/glitch/actions/interactions';
@@ -23,7 +24,7 @@ const importStatuses = (state, statuses) =>
 
 const deleteStatus = (state, id, references) => {
   references.forEach(ref => {
-    state = deleteStatus(state, ref[0], []);
+    state = deleteStatus(state, ref, []);
   });
 
   return state.delete(id);
@@ -39,6 +40,8 @@ export default function statuses(state = initialState, action) {
     return importStatuses(state, action.statuses);
   case FAVOURITE_REQUEST:
     return state.setIn([action.status.get('id'), 'favourited'], true);
+  case UNFAVOURITE_SUCCESS:
+    return state.updateIn([action.status.get('id'), 'favourites_count'], x => Math.max(0, x - 1));
   case FAVOURITE_FAIL:
     return state.get(action.status.get('id')) === undefined ? state : state.setIn([action.status.get('id'), 'favourited'], false);
   case BOOKMARK_REQUEST:

@@ -15,6 +15,9 @@ import { countableText } from 'flavours/glitch/util/counter';
 import OptionsContainer from '../containers/options_container';
 import Publisher from './publisher';
 import TextareaIcons from './textarea_icons';
+import { maxChars } from 'flavours/glitch/util/initial_state';
+import CharacterCounter from './character_counter';
+import { length } from 'stringz';
 
 const messages = defineMessages({
   placeholder: { id: 'compose_form.placeholder', defaultMessage: 'What is on your mind?' },
@@ -79,55 +82,48 @@ class ComposeForm extends ImmutablePureComponent {
     this.props.onChange(e.target.value);
   }
 
-  handleKeyDown = ({ ctrlKey, keyCode, metaKey, altKey }) => {
-    //  We submit the status on control/meta + enter.
-    if (keyCode === 13 && (ctrlKey || metaKey)) {
-      this.handleSubmit();
-    }
-
-    // Submit the status with secondary visibility on alt + enter.
-    if (keyCode === 13 && altKey) {
-      this.handleSecondarySubmit();
-    }
+  getFulltextForCharacterCounting = () => {
+    return [
+      this.props.spoiler? this.props.spoilerText: '',
+      countableText(this.props.text),
+      this.props.advancedOptions && this.props.advancedOptions.get('do_not_federate') ? ' 👁️' : ''
+    ].join('');
   }
 
-  handleSubmit = () => {
-    const { textarea: { value }, uploadForm } = this;
+  canSubmit = () => {
+    const { isSubmitting, isChangingUpload, isUploading, anyMedia } = this.props;
+    const fulltext = this.getFulltextForCharacterCounting();
+
+    return !(isSubmitting || isUploading || isChangingUpload || length(fulltext) > maxChars || (!fulltext.trim().length && !anyMedia));
+  }
+
+  handleSubmit = (overriddenVisibility = null) => {
     const {
-      onChange,
       onSubmit,
-      isSubmitting,
-      isChangingUpload,
-      isUploading,
       media,
-      anyMedia,
-      text,
       mediaDescriptionConfirmation,
       onMediaDescriptionConfirm,
+      onChangeVisibility,
     } = this.props;
 
-    //  If something changes inside the textarea, then we update the
-    //  state before submitting.
-    if (onChange && text !== value) {
-      onChange(value);
+    if (this.props.text !== this.textarea.value) {
+      // Something changed the text inside the textarea (e.g. browser extensions like Grammarly)
+      // Update the state to match the current text
+      this.props.onChange(this.textarea.value);
     }
 
-    // Submit disabled:
-    if (isSubmitting || isUploading || isChangingUpload || (!text.trim().length && !anyMedia)) {
+    if (!this.canSubmit()) {
       return;
     }
 
     // Submit unless there are media with missing descriptions
     if (mediaDescriptionConfirmation && onMediaDescriptionConfirm && media && media.some(item => !item.get('description'))) {
-      const firstWithoutDescription = media.findIndex(item => !item.get('description'));
-      if (uploadForm) {
-        const inputs = uploadForm.querySelectorAll('.composer--upload_form--item input');
-        if (inputs.length == media.size && firstWithoutDescription !== -1) {
-          inputs[firstWithoutDescription].focus();
-        }
-      }
-      onMediaDescriptionConfirm(this.context.router ? this.context.router.history : null);
+      const firstWithoutDescription = media.find(item => !item.get('description'));
+      onMediaDescriptionConfirm(this.context.router ? this.context.router.history : null, firstWithoutDescription.get('id'), overriddenVisibility);
     } else if (onSubmit) {
+      if (onChangeVisibility && overriddenVisibility) {
+        onChangeVisibility(overriddenVisibility);
+      }
       onSubmit(this.context.router ? this.context.router.history : null);
     }
   }
@@ -156,13 +152,9 @@ class ComposeForm extends ImmutablePureComponent {
   //  Handles the secondary submit button.
   handleSecondarySubmit = () => {
     const {
-      onChangeVisibility,
       sideArm,
     } = this.props;
-    if (sideArm !== 'none' && onChangeVisibility) {
-      onChangeVisibility(sideArm);
-    }
-    this.handleSubmit();
+    this.handleSubmit(sideArm === 'none' ? null : sideArm);
   }
 
   //  Selects a suggestion from the autofill.
@@ -174,10 +166,13 @@ class ComposeForm extends ImmutablePureComponent {
     this.props.onSuggestionSelected(tokenStart, token, value, ['spoiler_text']);
   }
 
-  //  When the escape key is released, we focus the UI.
-  handleKeyUp = ({ key }) => {
-    if (key === 'Escape') {
-      document.querySelector('.ui').parentElement.focus();
+  handleKeyDown = (e) => {
+    if (e.keyCode === 13 && (e.ctrlKey || e.metaKey)) {
+      this.handleSubmit();
+    }
+
+    if (e.keyCode == 13 && e.altKey) {
+      this.handleSecondarySubmit();
     }
   }
 
@@ -273,13 +268,9 @@ class ComposeForm extends ImmutablePureComponent {
     } = this;
     const {
       advancedOptions,
-      anyMedia,
       intl,
       isSubmitting,
-      isChangingUpload,
-      isUploading,
       layout,
-      media,
       onChangeSpoilerness,
       onChangeVisibility,
       onClearSuggestions,
@@ -292,11 +283,10 @@ class ComposeForm extends ImmutablePureComponent {
       spoiler,
       spoilerText,
       suggestions,
-      text,
       spoilersAlwaysOn,
     } = this.props;
 
-    let disabledButton = isSubmitting || isUploading || isChangingUpload || (!text.trim().length && !anyMedia);
+    const countText = this.getFulltextForCharacterCounting();
 
     return (
       <div className='composer'>
@@ -310,7 +300,6 @@ class ComposeForm extends ImmutablePureComponent {
             value={spoilerText}
             onChange={this.handleChangeSpoiler}
             onKeyDown={this.handleKeyDown}
-            onKeyUp={this.handleKeyUp}
             disabled={!spoiler}
             ref={this.handleRefSpoilerText}
             suggestions={this.props.suggestions}
@@ -330,9 +319,9 @@ class ComposeForm extends ImmutablePureComponent {
           disabled={isSubmitting}
           value={this.props.text}
           onChange={this.handleChange}
+          onKeyDown={this.handleKeyDown}
           suggestions={this.props.suggestions}
           onFocus={this.handleFocus}
-          onKeyDown={this.handleKeyDown}
           onSuggestionsFetchRequested={onFetchSuggestions}
           onSuggestionsClearRequested={onClearSuggestions}
           onSuggestionSelected={this.onSuggestionSelected}
@@ -347,20 +336,25 @@ class ComposeForm extends ImmutablePureComponent {
           </div>
         </AutosuggestTextarea>
 
-        <OptionsContainer
-          advancedOptions={advancedOptions}
-          disabled={isSubmitting}
-          onChangeVisibility={onChangeVisibility}
-          onToggleSpoiler={spoilersAlwaysOn ? null : onChangeSpoilerness}
-          onUpload={onPaste}
-          privacy={privacy}
-          sensitive={sensitive || (spoilersAlwaysOn && spoilerText && spoilerText.length > 0)}
-          spoiler={spoilersAlwaysOn ? (spoilerText && spoilerText.length > 0) : spoiler}
-        />
+        <div className='composer--options-wrapper'>
+          <OptionsContainer
+            advancedOptions={advancedOptions}
+            disabled={isSubmitting}
+            onChangeVisibility={onChangeVisibility}
+            onToggleSpoiler={spoilersAlwaysOn ? null : onChangeSpoilerness}
+            onUpload={onPaste}
+            privacy={privacy}
+            sensitive={sensitive || (spoilersAlwaysOn && spoilerText && spoilerText.length > 0)}
+            spoiler={spoilersAlwaysOn ? (spoilerText && spoilerText.length > 0) : spoiler}
+          />
+          <div className='compose--counter-wrapper'>
+            <CharacterCounter text={countText} max={maxChars} />
+          </div>
+        </div>
 
         <Publisher
-          countText={`${spoilerText}${countableText(text)}${advancedOptions && advancedOptions.get('do_not_federate') ? '\n\n❄️' : ''}`}
-          disabled={disabledButton}
+          countText={countText}
+          disabled={!this.canSubmit()}
           onSecondarySubmit={handleSecondarySubmit}
           onSubmit={handleSubmit}
           privacy={privacy}

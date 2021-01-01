@@ -2,11 +2,15 @@
 
 module Admin
   class DomainBlocksController < BaseController
-    before_action :set_domain_block, only: [:show, :destroy]
+    before_action :set_domain_block, only: [:show, :destroy, :edit, :update]
 
     def new
       authorize :domain_block, :create?
       @domain_block = DomainBlock.new(domain: params[:_domain])
+    end
+
+    def edit
+      authorize :domain_block, :create?
     end
 
     def create
@@ -25,6 +29,7 @@ module Admin
           @domain_block = existing_domain_block
           @domain_block.update(resource_params)
         end
+
         if @domain_block.save
           DomainBlockWorker.perform_async(@domain_block.id)
           log_action :create, @domain_block
@@ -32,6 +37,22 @@ module Admin
         else
           render :new
         end
+      end
+    end
+
+    def update
+      authorize :domain_block, :update?
+
+      @domain_block.update(update_params)
+
+      severity_changed = @domain_block.severity_changed?
+
+      if @domain_block.save
+        DomainBlockWorker.perform_async(@domain_block.id, severity_changed)
+        log_action :update, @domain_block
+        redirect_to admin_instances_path(limited: '1'), notice: I18n.t('admin.domain_blocks.created_msg')
+      else
+        render :edit
       end
     end
 
@@ -52,8 +73,12 @@ module Admin
       @domain_block = DomainBlock.find(params[:id])
     end
 
+    def update_params
+      params.require(:domain_block).permit(:severity, :reject_media, :reject_reports, :private_comment, :public_comment, :obfuscate)
+    end
+
     def resource_params
-      params.require(:domain_block).permit(:domain, :severity, :reject_media, :reject_reports)
+      params.require(:domain_block).permit(:domain, :severity, :reject_media, :reject_reports, :private_comment, :public_comment, :obfuscate)
     end
   end
 end

@@ -3,26 +3,32 @@
 #
 # Table name: domain_blocks
 #
-#  id             :bigint(8)        not null, primary key
-#  domain         :string           default(""), not null
-#  created_at     :datetime         not null
-#  updated_at     :datetime         not null
-#  severity       :integer          default("silence")
-#  reject_media   :boolean          default(FALSE), not null
-#  reject_reports :boolean          default(FALSE), not null
+#  id              :bigint(8)        not null, primary key
+#  domain          :string           default(""), not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  severity        :integer          default("silence")
+#  reject_media    :boolean          default(FALSE), not null
+#  reject_reports  :boolean          default(FALSE), not null
+#  private_comment :text
+#  public_comment  :text
+#  obfuscate       :boolean          default(FALSE), not null
 #
 
 class DomainBlock < ApplicationRecord
   include DomainNormalizable
+  include DomainMaterializable
 
   enum severity: [:silence, :suspend, :noop]
 
-  validates :domain, presence: true, uniqueness: true
+  validates :domain, presence: true, uniqueness: true, domain: true
 
   has_many :accounts, foreign_key: :domain, primary_key: :domain
   delegate :count, to: :accounts, prefix: true
 
   scope :matches_domain, ->(value) { where(arel_table[:domain].matches("%#{value}%")) }
+  scope :with_user_facing_limitations, -> { where(severity: [:silence, :suspend]).or(where(reject_media: true)) }
+  scope :by_severity, -> { order(Arel.sql('(CASE severity WHEN 0 THEN 1 WHEN 1 THEN 2 WHEN 2 THEN 0 END), reject_media, domain')) }
 
   class << self
     def suspend?(domain)
@@ -46,11 +52,13 @@ class DomainBlock < ApplicationRecord
     def rule_for(domain)
       return if domain.blank?
 
-      uri      = Addressable::URI.new.tap { |u| u.host = domain.gsub(/[\/]/, '') }
+      uri      = Addressable::URI.new.tap { |u| u.host = domain.strip.gsub(/[\/]/, '') }
       segments = uri.normalized_host.split('.')
       variants = segments.map.with_index { |_, i| segments[i..-1].join('.') }
 
-      where(domain: variants[0..-2]).order(Arel.sql('char_length(domain) desc')).first
+      where(domain: variants).order(Arel.sql('char_length(domain) desc')).first
+    rescue Addressable::URI::InvalidURIError, IDN::Idna::IdnaError
+      nil
     end
   end
 
@@ -65,5 +73,24 @@ class DomainBlock < ApplicationRecord
   def affected_accounts_count
     scope = suspend? ? accounts.where(suspended_at: created_at) : accounts.where(silenced_at: created_at)
     scope.count
+  end
+
+  def public_domain
+    return domain unless obfuscate?
+
+    length        = domain.size
+    visible_ratio = length / 4
+
+    domain.chars.map.with_index do |chr, i|
+      if i > visible_ratio && i < length - visible_ratio && chr != '.'
+        '*'
+      else
+        chr
+      end
+    end.join
+  end
+
+  def domain_digest
+    Digest::SHA256.hexdigest(domain)
   end
 end

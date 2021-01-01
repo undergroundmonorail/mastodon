@@ -9,6 +9,7 @@ module AccountAssociations
 
     # Identity proofs
     has_many :identity_proofs, class_name: 'AccountIdentityProof', dependent: :destroy, inverse_of: :account
+    has_many :devices, dependent: :destroy, inverse_of: :account
 
     # Timelines
     has_many :statuses, inverse_of: :account, dependent: :destroy
@@ -53,9 +54,14 @@ module AccountAssociations
 
     # Account migrations
     belongs_to :moved_to_account, class_name: 'Account', optional: true
+    has_many :migrations, class_name: 'AccountMigration', dependent: :destroy, inverse_of: :account
+    has_many :aliases, class_name: 'AccountAlias', dependent: :destroy, inverse_of: :account
 
     # Hashtags
     has_and_belongs_to_many :tags
     has_many :featured_tags, -> { includes(:tag) }, dependent: :destroy, inverse_of: :account
+
+    # Account deletion requests
+    has_one :deletion_request, class_name: 'AccountDeletionRequest', inverse_of: :account, dependent: :destroy
   end
 end

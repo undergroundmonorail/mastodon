@@ -7,6 +7,7 @@ import ImmutablePureComponent from 'react-immutable-pure-component';
 //  Our imports,
 import StatusContainer from 'flavours/glitch/containers/status_container';
 import NotificationFollow from './follow';
+import NotificationFollowRequestContainer from '../containers/follow_request_container';
 
 export default class Notification extends ImmutablePureComponent {
 
@@ -21,6 +22,7 @@ export default class Notification extends ImmutablePureComponent {
     cacheMediaWidth: PropTypes.func,
     cachedMediaWidth: PropTypes.number,
     onUnmount: PropTypes.func,
+    unread: PropTypes.bool,
   };
 
   render () {
@@ -45,6 +47,20 @@ export default class Notification extends ImmutablePureComponent {
           onMoveDown={onMoveDown}
           onMoveUp={onMoveUp}
           onMention={onMention}
+          unread={this.props.unread}
+        />
+      );
+    case 'follow_request':
+      return (
+        <NotificationFollowRequestContainer
+          hidden={hidden}
+          id={notification.get('id')}
+          account={notification.get('account')}
+          notification={notification}
+          onMoveDown={onMoveDown}
+          onMoveUp={onMoveUp}
+          onMention={onMention}
+          unread={this.props.unread}
         />
       );
     case 'mention':
@@ -64,6 +80,29 @@ export default class Notification extends ImmutablePureComponent {
           cacheMediaWidth={this.props.cacheMediaWidth}
           onUnmount={this.props.onUnmount}
           withDismiss
+          unread={this.props.unread}
+        />
+      );
+    case 'status':
+      return (
+        <StatusContainer
+          containerId={notification.get('id')}
+          hidden={hidden}
+          id={notification.get('status')}
+          account={notification.get('account')}
+          prepend='status'
+          muted
+          notification={notification}
+          onMoveDown={onMoveDown}
+          onMoveUp={onMoveUp}
+          onMention={onMention}
+          getScrollPosition={getScrollPosition}
+          updateScrollBottom={updateScrollBottom}
+          cachedMediaWidth={this.props.cachedMediaWidth}
+          cacheMediaWidth={this.props.cacheMediaWidth}
+          onUnmount={this.props.onUnmount}
+          withDismiss
+          unread={this.props.unread}
         />
       );
     case 'favourite':
@@ -85,6 +124,7 @@ export default class Notification extends ImmutablePureComponent {
           cacheMediaWidth={this.props.cacheMediaWidth}
           onUnmount={this.props.onUnmount}
           withDismiss
+          unread={this.props.unread}
         />
       );
     case 'reblog':
@@ -106,6 +146,7 @@ export default class Notification extends ImmutablePureComponent {
           cacheMediaWidth={this.props.cacheMediaWidth}
           onUnmount={this.props.onUnmount}
           withDismiss
+          unread={this.props.unread}
         />
       );
     case 'poll':
@@ -127,6 +168,7 @@ export default class Notification extends ImmutablePureComponent {
           cacheMediaWidth={this.props.cacheMediaWidth}
           onUnmount={this.props.onUnmount}
           withDismiss
+          unread={this.props.unread}
         />
       );
     default:

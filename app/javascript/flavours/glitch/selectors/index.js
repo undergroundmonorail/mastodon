@@ -27,6 +27,7 @@ export const toServerSideType = columnType => {
   case 'notifications':
   case 'public':
   case 'thread':
+  case 'account':
     return columnType;
   default:
     if (columnType.indexOf('list:') > -1) {
@@ -145,7 +146,7 @@ export const makeGetStatus = () => {
         map.set('account', accountBase);
         map.set('filtered', filtered);
       });
-    }
+    },
   );
 };
 
@@ -157,6 +158,7 @@ export const getAlerts = createSelector([getAlertsBase], (base) => {
   base.forEach(item => {
     arr.push({
       message: item.get('message'),
+      message_values: item.get('message_values'),
       title: item.get('title'),
       key: item.get('key'),
       dismissAfter: 5000,
@@ -181,12 +183,13 @@ export const makeGetNotification = () => {
 export const getAccountGallery = createSelector([
   (state, id) => state.getIn(['timelines', `account:${id}:media`, 'items'], ImmutableList()),
   state       => state.get('statuses'),
-], (statusIds, statuses) => {
+  (state, id) => state.getIn(['accounts', id]),
+], (statusIds, statuses, account) => {
   let medias = ImmutableList();
 
   statusIds.forEach(statusId => {
     const status = statuses.get(statusId);
-    medias = medias.concat(status.get('media_attachments').map(media => media.set('status', status)));
+    medias = medias.concat(status.get('media_attachments').map(media => media.set('status', status).set('account', account)));
   });
 
   return medias;

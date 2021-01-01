@@ -1,3 +1,47 @@
+@keyframes spring-flip-in {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  30% {
+    transform: rotate(-242.4deg);
+  }
+
+  60% {
+    transform: rotate(-158.35deg);
+  }
+
+  90% {
+    transform: rotate(-187.5deg);
+  }
+
+  100% {
+    transform: rotate(-180deg);
+  }
+}
+
+@keyframes spring-flip-out {
+  0% {
+    transform: rotate(-180deg);
+  }
+
+  30% {
+    transform: rotate(62.4deg);
+  }
+
+  60% {
+    transform: rotate(-21.635deg);
+  }
+
+  90% {
+    transform: rotate(7.5deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
 .status__content--with-action {
   cursor: pointer;
 }
@@ -10,6 +54,7 @@
   word-wrap: break-word;
   overflow: visible;
   padding-top: 5px;
+  clear: both;
 
   em { font-style: italic; }
   strong { font-weight: bold; }
@@ -44,6 +89,7 @@
   p, pre, blockquote {
     margin-bottom: 20px;
     white-space: pre-wrap;
+    unicode-bidi: plaintext;
 
     &:last-child {
       margin-bottom: 0;
@@ -52,6 +98,7 @@
 
   .status__content__text,
   .e-content {
+    overflow: hidden;
 
     & > ul,
     & > ol {
@@ -100,6 +147,11 @@
       text-align: sub;
     }
 
+    sup {
+      font-size: smaller;
+      vertical-align: super;
+    }
+
     ul, ol {
       margin-left: 1em;
 
@@ -120,6 +172,7 @@
   a {
     color: $secondary-text-color;
     text-decoration: none;
+    unicode-bidi: isolate;
 
     &:hover {
       text-decoration: underline;
@@ -201,7 +254,9 @@
 }
 
 .notif-cleaning {
-  .status, .notification-follow {
+  .status,
+  .notification-follow,
+  .notification-follow-request {
     padding-right: ($dismiss-overlay-width + 0.5rem);
   }
 }
@@ -225,7 +280,8 @@
   position: absolute;
 }
 
-.notification-follow {
+.notification-follow,
+.notification-follow-request {
   position: relative;
 
   // same like Status
@@ -241,7 +297,7 @@
     outline: 0;
     background: lighten($ui-base-color, 4%);
 
-    &.status.status-direct:not(.read) {
+    &.status.status-direct {
       background: lighten($ui-base-color, 12%);
 
       &.muted {
@@ -261,7 +317,7 @@
   position: relative;
   height: auto;
   border-bottom: 1px solid lighten($ui-base-color, 8%);
-  cursor: default;
+  cursor: auto;
 
   @supports (-ms-overflow-style: -ms-autohiding-scrollbar) {
     // Add margin to avoid Edge auto-hiding scrollbar appearing over content.
@@ -277,11 +333,12 @@
   opacity: 1;
   animation: fade 150ms linear;
 
-  .video-player {
+  .video-player,
+  .audio-player {
     margin-top: 8px;
   }
 
-  &.status-direct:not(.read) {
+  &.status-direct {
     background: lighten($ui-base-color, 8%);
     border-bottom-color: lighten($ui-base-color, 12%);
   }
@@ -296,12 +353,10 @@
     }
 
     .display-name {
+      color: $light-text-color;
+
       strong {
         color: $inverted-text-color;
-      }
-
-      span {
-        color: $lighter-text-color;
       }
     }
 
@@ -366,7 +421,7 @@
     &:focus > .status__content:after {
       background: linear-gradient(rgba(lighten($ui-base-color, 4%), 0), rgba(lighten($ui-base-color, 4%), 1));
     }
-    &.status-direct:not(.read)> .status__content:after {
+    &.status-direct > .status__content:after {
       background: linear-gradient(rgba(lighten($ui-base-color, 8%), 0), rgba(lighten($ui-base-color, 8%), 1));
     }
 
@@ -442,6 +497,24 @@
     padding-left: 2px;
     padding-right: 2px;
   }
+
+  .status__collapse-button.active > .fa-angle-double-up {
+    transform: rotate(-180deg);
+  }
+}
+
+.no-reduce-motion .status__collapse-button {
+  &.activate {
+    & > .fa-angle-double-up {
+      animation: spring-flip-in 1s linear;
+    }
+  }
+
+  &.deactivate {
+    & > .fa-angle-double-up {
+      animation: spring-flip-out 1s linear;
+    }
+  }
 }
 
 .status__info__account {
@@ -457,6 +530,7 @@
   .status-check-box__status {
     margin: 10px 0 10px 10px;
     flex: 1;
+    overflow: hidden;
 
     .media-gallery {
       max-width: 250px;
@@ -467,7 +541,8 @@
       white-space: normal;
     }
 
-    .video-player {
+    .video-player,
+    .audio-player {
       margin-top: 8px;
       max-width: 250px;
     }
@@ -511,28 +586,14 @@
   align-items: center;
   display: flex;
   margin-top: 8px;
-
-  &__counter {
-    display: inline-flex;
-    margin-right: 11px;
-    align-items: center;
-
-    .status__action-bar-button {
-      margin-right: 4px;
-    }
-
-    &__label {
-      display: inline-block;
-      width: 14px;
-      font-size: 12px;
-      font-weight: 500;
-      color: $action-button-color;
-    }
-  }
 }
 
 .status__action-bar-button {
   margin-right: 18px;
+
+  &.icon-button--with-counter {
+    margin-right: 14px;
+  }
 }
 
 .status__action-bar-dropdown {
@@ -575,7 +636,8 @@
     }
   }
 
-  .video-player {
+  .video-player,
+  .audio-player {
     margin-top: 8px;
   }
 }
@@ -651,6 +713,10 @@ a.status__display-name,
   color: inherit;
 }
 
+.detailed-status .button.logo-button {
+  margin-bottom: 15px;
+}
+
 .detailed-status__display-name {
   color: $secondary-text-color;
   display: block;
@@ -684,6 +750,7 @@ a.status__display-name,
 }
 
 .muted {
+  .status__content,
   .status__content p,
   .status__content a,
   .status__content__text {
@@ -717,6 +784,7 @@ a.status__display-name,
 }
 
 .status-card {
+  position: relative;
   display: flex;
   font-size: 14px;
   border: 1px solid lighten($ui-base-color, 8%);
@@ -852,7 +920,8 @@ a.status-card {
     width: 100%;
   }
 
-  .status-card__image-image {
+  .status-card__image-image,
+  .status-card__image-preview {
     border-radius: 4px 4px 0 0;
   }
 
@@ -897,65 +966,22 @@ a.status-card.compact:hover {
   background-position: center center;
 }
 
-.status__video-player {
-  display: flex;
-  align-items: center;
-  background: $base-shadow-color;
-  box-sizing: border-box;
-  cursor: default; /* May not be needed */
-  margin-top: 8px;
-  overflow: hidden;
-  position: relative;
-
-  @include fullwidth-gallery;
-}
-
-.status__video-player-video {
-  height: 100%;
-  object-fit: contain;
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
+.status-card__image-preview {
+  border-radius: 4px 0 0 4px;
+  display: block;
+  margin: 0;
   width: 100%;
-  z-index: 1;
-
-  &:not(.letterbox) {
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.status__video-player-expand,
-.status__video-player-mute {
-  color: $primary-text-color;
-  opacity: 0.8;
+  height: 100%;
+  object-fit: fill;
   position: absolute;
-  right: 4px;
-  text-shadow: 0 1px 1px $base-shadow-color, 1px 0 1px $base-shadow-color;
-}
+  top: 0;
+  left: 0;
+  z-index: 0;
+  background: $base-overlay-background;
 
-.status__video-player-spoiler {
-  display: none;
-  color: $primary-text-color;
-  left: 4px;
-  position: absolute;
-  text-shadow: 0 1px 1px $base-shadow-color, 1px 0 1px $base-shadow-color;
-  top: 4px;
-  z-index: 100;
-
-  &.status__video-player-spoiler--visible {
-    display: block;
+  &--hidden {
+    display: none;
   }
-}
-
-.status__video-player-expand {
-  bottom: 4px;
-  z-index: 100;
-}
-
-.status__video-player-mute {
-  top: 4px;
-  z-index: 5;
 }
 
 .attachment-list {
@@ -1034,5 +1060,126 @@ a.status-card.compact:hover {
   &:hover,
   &:active {
     text-decoration: underline;
+  }
+}
+
+.notification,
+.status {
+  position: relative;
+
+  &.unread {
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: 0;
+      width: 100%;
+      height: 100%;
+      border-left: 2px solid $highlight-text-color;
+      pointer-events: none;
+    }
+  }
+}
+
+.picture-in-picture {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+
+  &.left {
+    right: unset;
+    left: 20px;
+  }
+
+  &__footer {
+    border-radius: 0 0 4px 4px;
+    background: lighten($ui-base-color, 4%);
+    padding: 10px;
+    padding-top: 12px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__header {
+    border-radius: 4px 4px 0 0;
+    background: lighten($ui-base-color, 4%);
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+
+    &__account {
+      display: flex;
+      text-decoration: none;
+    }
+
+    .account__avatar {
+      margin-right: 10px;
+    }
+
+    .display-name {
+      color: $primary-text-color;
+      text-decoration: none;
+
+      strong,
+      span {
+        display: block;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+
+      span {
+        color: $darker-text-color;
+      }
+    }
+  }
+
+  .video-player,
+  .audio-player {
+    border-radius: 0;
+  }
+
+  @media screen and (max-width: 415px) {
+    width: 210px;
+    bottom: 10px;
+    right: 10px;
+
+    &__footer {
+      display: none;
+    }
+
+    .video-player,
+    .audio-player {
+      border-radius: 0 0 4px 4px;
+    }
+  }
+}
+
+.picture-in-picture-placeholder {
+  box-sizing: border-box;
+  border: 2px dashed lighten($ui-base-color, 8%);
+  background: $base-shadow-color;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  color: $darker-text-color;
+
+  i {
+    display: block;
+    font-size: 24px;
+    font-weight: 400;
+    margin-bottom: 10px;
+  }
+
+  &:hover,
+  &:focus,
+  &:active {
+    border-color: lighten($ui-base-color, 12%);
   }
 }

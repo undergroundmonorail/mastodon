@@ -126,8 +126,8 @@ RSpec.describe Account, type: :model do
       end
 
       it 'sets default avatar, header, avatar_remote_url, and header_remote_url' do
-        expect(account.avatar_remote_url).to eq ''
-        expect(account.header_remote_url).to eq ''
+        expect(account.avatar_remote_url).to eq 'https://remote.test/invalid_avatar'
+        expect(account.header_remote_url).to eq expectation.header_remote_url
         expect(account.avatar_file_name).to  eq nil
         expect(account.header_file_name).to  eq nil
       end
@@ -212,13 +212,6 @@ RSpec.describe Account, type: :model do
     it 'returns an RSA key pair' do
       account = Fabricate(:account)
       expect(account.keypair).to be_instance_of OpenSSL::PKey::RSA
-    end
-  end
-
-  describe '#subscription' do
-    it 'returns an OStatus subscription' do
-      account = Fabricate(:account)
-      expect(account.subscription('')).to be_instance_of OStatus2::Subscription
     end
   end
 
@@ -447,13 +440,6 @@ RSpec.describe Account, type: :model do
     end
   end
 
-  describe '.domains' do
-    it 'returns domains' do
-      Fabricate(:account, domain: 'domain')
-      expect(Account.remote.domains).to match_array(['domain'])
-    end
-  end
-
   describe '#statuses_count' do
     subject { Fabricate(:account) }
 
@@ -626,18 +612,18 @@ RSpec.describe Account, type: :model do
     end
 
     context 'when is remote' do
-      it 'is invalid if the username is not unique in case-sensitive comparison among accounts in the same normalized domain' do
+      it 'is invalid if the username is same among accounts in the same normalized domain' do
         Fabricate(:account, domain: 'にゃん', username: 'username')
         account = Fabricate.build(:account, domain: 'xn--r9j5b5b', username: 'username')
         account.valid?
         expect(account).to model_have_error_on_field(:username)
       end
 
-      it 'is valid even if the username is unique only in case-sensitive comparison among accounts in the same normalized domain' do
+      it 'is invalid if the username is not unique in case-insensitive comparison among accounts in the same normalized domain' do
         Fabricate(:account, domain: 'にゃん', username: 'username')
         account = Fabricate.build(:account, domain: 'xn--r9j5b5b', username: 'Username')
         account.valid?
-        expect(account).not_to model_have_error_on_field(:username)
+        expect(account).to model_have_error_on_field(:username)
       end
 
       it 'is valid even if the username contains hyphens' do
@@ -744,20 +730,6 @@ RSpec.describe Account, type: :model do
       end
     end
 
-    describe 'by_domain_accounts' do
-      it 'returns accounts grouped by domain sorted by accounts' do
-        2.times { Fabricate(:account, domain: 'example.com') }
-        Fabricate(:account, domain: 'example2.com')
-
-        results = Account.where('id > 0').by_domain_accounts
-        expect(results.length).to eq 2
-        expect(results.first.domain).to eq 'example.com'
-        expect(results.first.accounts_count).to eq 2
-        expect(results.last.domain).to eq 'example2.com'
-        expect(results.last.accounts_count).to eq 1
-      end
-    end
-
     describe 'local' do
       it 'returns an array of accounts who do not have a domain' do
         account_1 = Fabricate(:account, domain: nil)
@@ -823,4 +795,28 @@ RSpec.describe Account, type: :model do
   end
 
   include_examples 'AccountAvatar', :account
+  include_examples 'AccountHeader', :account
+
+  describe '#increment_count!' do
+    subject { Fabricate(:account) }
+
+    it 'increments the count in multi-threaded an environment when account_stat is not yet initialized' do
+      subject
+
+      increment_by   = 15
+      wait_for_start = true
+
+      threads = Array.new(increment_by) do
+        Thread.new do
+          true while wait_for_start
+          Account.find(subject.id).increment_count!(:followers_count)
+        end
+      end
+
+      wait_for_start = false
+      threads.each(&:join)
+
+      expect(subject.reload.followers_count).to eq 15
+    end
+  end
 end

@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import createHistory from 'history/createBrowserHistory';
+import 'wicg-inert';
+import { createBrowserHistory } from 'history';
 
 export default class ModalRoot extends React.PureComponent {
   static contextTypes = {
@@ -13,11 +14,7 @@ export default class ModalRoot extends React.PureComponent {
     noEsc: PropTypes.bool,
   };
 
-  state = {
-    revealed: !!this.props.children,
-  };
-
-  activeElement = this.state.revealed ? document.activeElement : null;
+  activeElement = this.props.children ? document.activeElement : null;
 
   handleKeyUp = (e) => {
     if ((e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27)
@@ -50,7 +47,7 @@ export default class ModalRoot extends React.PureComponent {
   componentDidMount () {
     window.addEventListener('keyup', this.handleKeyUp, false);
     window.addEventListener('keydown', this.handleKeyDown, false);
-    this.history = this.context.router ? this.context.router.history : createHistory();
+    this.history = this.context.router ? this.context.router.history : createBrowserHistory();
   }
 
   componentWillReceiveProps (nextProps) {
@@ -58,25 +55,27 @@ export default class ModalRoot extends React.PureComponent {
       this.activeElement = document.activeElement;
 
       this.getSiblings().forEach(sibling => sibling.setAttribute('inert', true));
-    } else if (!nextProps.children) {
-      this.setState({ revealed: false });
-    }
-    if (!nextProps.children && !!this.props.children) {
-      this.activeElement.focus({ preventScroll: true });
-      this.activeElement = null;
     }
   }
 
   componentDidUpdate (prevProps) {
     if (!this.props.children && !!prevProps.children) {
       this.getSiblings().forEach(sibling => sibling.removeAttribute('inert'));
+
+      // Because of the wicg-inert polyfill, the activeElement may not be
+      // immediately selectable, we have to wait for observers to run, as
+      // described in https://github.com/WICG/inert#performance-and-gotchas
+      Promise.resolve().then(() => {
+        this.activeElement.focus({ preventScroll: true });
+        this.activeElement = null;
+      }).catch((error) => {
+        console.error(error);
+      });
+
       this.handleModalClose();
     }
-    if (this.props.children) {
-      requestAnimationFrame(() => {
-        this.setState({ revealed: true });
-      });
-      if (!prevProps.children) this.handleModalOpen();
+    if (this.props.children && !prevProps.children) {
+      this.handleModalOpen();
     }
   }
 
@@ -113,7 +112,6 @@ export default class ModalRoot extends React.PureComponent {
 
   render () {
     const { children, onClose } = this.props;
-    const { revealed } = this.state;
     const visible = !!children;
 
     if (!visible) {
@@ -123,7 +121,7 @@ export default class ModalRoot extends React.PureComponent {
     }
 
     return (
-      <div className='modal-root' ref={this.setRef} style={{ opacity: revealed ? 1 : 0 }}>
+      <div className='modal-root' ref={this.setRef}>
         <div style={{ pointerEvents: visible ? 'auto' : 'none' }}>
           <div role='presentation' className='modal-root__overlay' onClick={onClose} />
           <div role='dialog' className='modal-root__container'>{children}</div>

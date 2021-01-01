@@ -76,6 +76,10 @@
       margin-left: 15px;
       text-align: left;
 
+      i[data-hidden] {
+        display: none;
+      }
+
       strong {
         font-size: 15px;
         color: $primary-text-color;
@@ -224,6 +228,7 @@
 }
 
 .account__header__fields {
+  max-width: 100vw;
   padding: 0;
   margin: 15px -15px -15px;
   border: 0 none;

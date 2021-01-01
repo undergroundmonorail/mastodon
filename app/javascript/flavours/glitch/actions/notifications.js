@@ -7,6 +7,7 @@ import {
   importFetchedStatus,
   importFetchedStatuses,
 } from './importer';
+import { submitMarkers } from './markers';
 import { saveSettings } from './settings';
 import { defineMessages } from 'react-intl';
 import { List as ImmutableList } from 'immutable';
@@ -14,8 +15,11 @@ import { unescapeHTML } from 'flavours/glitch/util/html';
 import { getFiltersRegex } from 'flavours/glitch/selectors';
 import { usePendingItems as preferPendingItems } from 'flavours/glitch/util/initial_state';
 import compareId from 'flavours/glitch/util/compare_id';
+import { searchTextFromRawStatus } from 'flavours/glitch/actions/importer/normalizer';
+import { requestNotificationPermission } from 'flavours/glitch/util/notifications';
 
 export const NOTIFICATIONS_UPDATE = 'NOTIFICATIONS_UPDATE';
+export const NOTIFICATIONS_UPDATE_NOOP = 'NOTIFICATIONS_UPDATE_NOOP';
 
 // tracking the notif cleaning request
 export const NOTIFICATIONS_DELETE_MARKED_REQUEST = 'NOTIFICATIONS_DELETE_MARKED_REQUEST';
@@ -43,6 +47,12 @@ export const NOTIFICATIONS_UNMOUNT = 'NOTIFICATIONS_UNMOUNT';
 
 export const NOTIFICATIONS_SET_VISIBILITY = 'NOTIFICATIONS_SET_VISIBILITY';
 
+
+export const NOTIFICATIONS_MARK_AS_READ = 'NOTIFICATIONS_MARK_AS_READ';
+
+export const NOTIFICATIONS_SET_BROWSER_SUPPORT    = 'NOTIFICATIONS_SET_BROWSER_SUPPORT';
+export const NOTIFICATIONS_SET_BROWSER_PERMISSION = 'NOTIFICATIONS_SET_BROWSER_PERMISSION';
+
 defineMessages({
   mention: { id: 'notification.mention', defaultMessage: '{name} mentioned you' },
 });
@@ -68,10 +78,10 @@ export function updateNotifications(notification, intlMessages, intlLocale) {
 
     let filtered = false;
 
-    if (notification.type === 'mention') {
+    if (['mention', 'status'].includes(notification.type)) {
       const dropRegex   = filters[0];
       const regex       = filters[1];
-      const searchIndex = notification.status.spoiler_text + '\n' + unescapeHTML(notification.status.content);
+      const searchIndex = searchTextFromRawStatus(notification.status);
 
       if (dropRegex && dropRegex.test(searchIndex)) {
         return;
@@ -79,6 +89,8 @@ export function updateNotifications(notification, intlMessages, intlLocale) {
 
       filtered = regex && regex.test(searchIndex);
     }
+
+    dispatch(submitMarkers());
 
     if (showInColumn) {
       dispatch(importFetchedAccount(notification.account));
@@ -120,7 +132,7 @@ const excludeTypesFromSettings = state => state.getIn(['settings', 'notification
 
 
 const excludeTypesFromFilter = filter => {
-  const allTypes = ImmutableList(['follow', 'favourite', 'reblog', 'mention', 'poll']);
+  const allTypes = ImmutableList(['follow', 'follow_request', 'favourite', 'reblog', 'mention', 'poll']);
   return allTypes.filterNot(item => item === filter).toJS();
 };
 
@@ -165,11 +177,12 @@ export function expandNotifications({ maxId } = {}, done = noOp) {
       dispatch(importFetchedAccounts(response.data.map(item => item.account)));
       dispatch(importFetchedStatuses(response.data.map(item => item.status).filter(status => !!status)));
 
-      dispatch(expandNotificationsSuccess(response.data, next ? next.uri : null, isLoadingMore, isLoadingRecent && preferPendingItems));
+      dispatch(expandNotificationsSuccess(response.data, next ? next.uri : null, isLoadingMore, isLoadingRecent, isLoadingRecent && preferPendingItems));
       fetchRelatedRelationships(dispatch, response.data);
-      done();
+      dispatch(submitMarkers());
     }).catch(error => {
       dispatch(expandNotificationsFail(error, isLoadingMore));
+    }).finally(() => {
       done();
     });
   };
@@ -182,11 +195,12 @@ export function expandNotificationsRequest(isLoadingMore) {
   };
 };
 
-export function expandNotificationsSuccess(notifications, next, isLoadingMore, usePendingItems) {
+export function expandNotificationsSuccess(notifications, next, isLoadingMore, isLoadingRecent, usePendingItems) {
   return {
     type: NOTIFICATIONS_EXPAND_SUCCESS,
     notifications,
     next,
+    isLoadingRecent: isLoadingRecent,
     usePendingItems,
     skipLoading: !isLoadingMore,
   };
@@ -197,6 +211,7 @@ export function expandNotificationsFail(error, isLoadingMore) {
     type: NOTIFICATIONS_EXPAND_FAIL,
     error,
     skipLoading: !isLoadingMore,
+    skipAlert: !isLoadingMore,
   };
 };
 
@@ -311,3 +326,48 @@ export function setFilter (filterType) {
     dispatch(saveSettings());
   };
 };
+
+export function markNotificationsAsRead() {
+  return {
+    type: NOTIFICATIONS_MARK_AS_READ,
+  };
+};
+
+// Browser support
+export function setupBrowserNotifications() {
+  return dispatch => {
+    dispatch(setBrowserSupport('Notification' in window));
+    if ('Notification' in window) {
+      dispatch(setBrowserPermission(Notification.permission));
+    }
+
+    if ('Notification' in window && 'permissions' in navigator) {
+      navigator.permissions.query({ name: 'notifications' }).then((status) => {
+        status.onchange = () => dispatch(setBrowserPermission(Notification.permission));
+      }).catch(console.warn);
+    }
+  };
+}
+
+export function requestBrowserPermission(callback = noOp) {
+  return dispatch => {
+    requestNotificationPermission((permission) => {
+      dispatch(setBrowserPermission(permission));
+      callback(permission);
+    });
+  };
+};
+
+export function setBrowserSupport (value) {
+  return {
+    type: NOTIFICATIONS_SET_BROWSER_SUPPORT,
+    value,
+  };
+}
+
+export function setBrowserPermission (value) {
+  return {
+    type: NOTIFICATIONS_SET_BROWSER_PERMISSION,
+    value,
+  };
+}

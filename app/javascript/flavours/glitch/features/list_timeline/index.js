@@ -13,13 +13,15 @@ import { fetchList, deleteList, updateList } from 'flavours/glitch/actions/lists
 import { openModal } from 'flavours/glitch/actions/modal';
 import MissingIndicator from 'flavours/glitch/components/missing_indicator';
 import LoadingIndicator from 'flavours/glitch/components/loading_indicator';
+import Icon from 'flavours/glitch/components/icon';
+import RadioButton from 'flavours/glitch/components/radio_button';
 
 const messages = defineMessages({
   deleteMessage: { id: 'confirmations.delete_list.message', defaultMessage: 'Are you sure you want to permanently delete this list?' },
   deleteConfirm: { id: 'confirmations.delete_list.confirm', defaultMessage: 'Delete' },
-  all_replies:   { id: 'lists.replies_policy.all_replies', defaultMessage: 'any followed user' },
-  no_replies:    { id: 'lists.replies_policy.no_replies', defaultMessage: 'no one' },
-  list_replies:  { id: 'lists.replies_policy.list_replies', defaultMessage: 'members of the list' },
+  followed:   { id: 'lists.replies_policy.followed', defaultMessage: 'Any followed user' },
+  none:    { id: 'lists.replies_policy.none', defaultMessage: 'No one' },
+  list:  { id: 'lists.replies_policy.list', defaultMessage: 'Members of the list' },
 });
 
 const mapStateToProps = (state, props) => ({
@@ -27,9 +29,9 @@ const mapStateToProps = (state, props) => ({
   hasUnread: state.getIn(['timelines', `list:${props.params.id}`, 'unread']) > 0,
 });
 
-@connect(mapStateToProps)
+export default @connect(mapStateToProps)
 @injectIntl
-export default class ListTimeline extends React.PureComponent {
+class ListTimeline extends React.PureComponent {
 
   static contextTypes = {
     router: PropTypes.object,
@@ -173,31 +175,27 @@ export default class ListTimeline extends React.PureComponent {
           onClick={this.handleHeaderClick}
           pinned={pinned}
           multiColumn={multiColumn}
+          bindToDocument={!multiColumn}
         >
-          <div className='column-header__links'>
+          <div className='column-settings__row column-header__links'>
             <button className='text-btn column-header__setting-btn' tabIndex='0' onClick={this.handleEditClick}>
-              <i className='fa fa-pencil' /> <FormattedMessage id='lists.edit' defaultMessage='Edit list' />
+              <Icon id='pencil' /> <FormattedMessage id='lists.edit' defaultMessage='Edit list' />
             </button>
 
             <button className='text-btn column-header__setting-btn' tabIndex='0' onClick={this.handleDeleteClick}>
-              <i className='fa fa-trash' /> <FormattedMessage id='lists.delete' defaultMessage='Delete list' />
+              <Icon id='trash' /> <FormattedMessage id='lists.delete' defaultMessage='Delete list' />
             </button>
           </div>
 
           { replies_policy !== undefined && (
-            <div>
+            <div role='group' aria-labelledby={`list-${id}-replies-policy`}>
+              <span id={`list-${id}-replies-policy`} className='column-settings__section'>
+                <FormattedMessage id='lists.replies_policy.title' defaultMessage='Show replies to:' />
+              </span>
               <div className='column-settings__row'>
-                <fieldset>
-                  <legend><FormattedMessage id='lists.replies_policy.title' defaultMessage='Show replies to:' /></legend>
-                  { ['no_replies', 'list_replies', 'all_replies'].map(policy => (
-                    <div className='setting-radio'>
-                      <input className='setting-radio__input' id={['setting', 'radio', id, policy].join('-')} type='radio' value={policy} checked={replies_policy === policy} onChange={this.handleRepliesPolicyChange} />
-                      <label className='setting-radio__label' htmlFor={['setting', 'radio', id, policy].join('-')}>
-                        <FormattedMessage {...messages[policy]} />
-                      </label>
-                    </div>
-                  ))}
-                </fieldset>
+                { ['none', 'list', 'followed'].map(policy => (
+                  <RadioButton name='order' value={policy} label={intl.formatMessage(messages[policy])} checked={replies_policy === policy} onChange={this.handleRepliesPolicyChange} />
+                ))}
               </div>
             </div>
           )}
@@ -211,6 +209,7 @@ export default class ListTimeline extends React.PureComponent {
           timelineId={`list:${id}`}
           onLoadMore={this.handleLoadMore}
           emptyMessage={<FormattedMessage id='empty_column.list' defaultMessage='There is nothing in this list yet.' />}
+          bindToDocument={!multiColumn}
         />
       </Column>
     );

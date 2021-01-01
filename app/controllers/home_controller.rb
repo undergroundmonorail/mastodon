@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 class HomeController < ApplicationController
+  before_action :redirect_unauthenticated_to_permalinks!
   before_action :authenticate_user!
 
   before_action :set_pack
   before_action :set_referrer_policy_header
-  before_action :set_initial_state_json
 
   def index
     @body_classes = 'app-body'
@@ -13,7 +13,7 @@ class HomeController < ApplicationController
 
   private
 
-  def authenticate_user!
+  def redirect_unauthenticated_to_permalinks!
     return if user_signed_in?
 
     matches = request.path.match(/\A\/web\/(statuses|accounts)\/([\d]+)\z/)
@@ -38,26 +38,12 @@ class HomeController < ApplicationController
     end
 
     matches = request.path.match(%r{\A/web/timelines/tag/(?<tag>.+)\z})
+
     redirect_to(matches ? tag_path(CGI.unescape(matches[:tag])) : default_redirect_path)
   end
 
   def set_pack
     use_pack 'home'
-  end
-
-  def set_initial_state_json
-    serializable_resource = ActiveModelSerializers::SerializableResource.new(InitialStatePresenter.new(initial_state_params), serializer: InitialStateSerializer)
-    @initial_state_json   = serializable_resource.to_json
-  end
-
-  def initial_state_params
-    {
-      settings: Web::Setting.find_by(user: current_user)&.data || {},
-      push_subscription: current_account.user.web_push_subscription(current_session),
-      current_account: current_account,
-      token: current_session.token,
-      admin: Account.find_local(Setting.site_contact_username.strip.gsub(/\A@/, '')),
-    }
   end
 
   def default_redirect_path

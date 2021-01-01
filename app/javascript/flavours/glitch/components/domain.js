@@ -5,11 +5,11 @@ import { defineMessages, injectIntl } from 'react-intl';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 
 const messages = defineMessages({
-  unblockDomain: { id: 'account.unblock_domain', defaultMessage: 'Unhide {domain}' },
+  unblockDomain: { id: 'account.unblock_domain', defaultMessage: 'Unblock domain {domain}' },
 });
 
-@injectIntl
-export default class Account extends ImmutablePureComponent {
+export default @injectIntl
+class Account extends ImmutablePureComponent {
 
   static propTypes = {
     domain: PropTypes.string,

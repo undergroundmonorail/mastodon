@@ -32,13 +32,6 @@ export default class Mastodon extends React.PureComponent {
 
   componentDidMount() {
     this.disconnect = store.dispatch(connectUserStream());
-
-    // Desktop notifications
-    // Ask after 1 minute
-    if (typeof window.Notification !== 'undefined' && Notification.permission === 'default') {
-      window.setTimeout(() => Notification.requestPermission(), 60 * 1000);
-    }
-
     store.dispatch(showOnboardingOnce());
   }
 
@@ -49,6 +42,10 @@ export default class Mastodon extends React.PureComponent {
     }
   }
 
+  shouldUpdateScroll (_, { location }) {
+    return !(location.state && location.state.mastodonModalOpen);
+  }
+
   render () {
     const { locale } = this.props;
 
@@ -57,7 +54,7 @@ export default class Mastodon extends React.PureComponent {
         <Provider store={store}>
           <ErrorBoundary>
             <BrowserRouter basename='/web'>
-              <ScrollContext>
+              <ScrollContext shouldUpdateScroll={this.shouldUpdateScroll}>
                 <Route path='/' component={UI} />
               </ScrollContext>
             </BrowserRouter>

@@ -30,6 +30,7 @@ class InitialStateSerializer < ActiveModel::Serializer
       access_token: object.token,
       locale: I18n.locale,
       domain: Rails.configuration.x.local_domain,
+      title: instance_presenter.site_title,
       admin: object.admin&.id&.to_s,
       search_enabled: Chewy.enabled?,
       repository: Mastodon::Version.repository,
@@ -51,12 +52,21 @@ class InitialStateSerializer < ActiveModel::Serializer
       store[:display_media]     = object.current_account.user.setting_display_media
       store[:expand_spoilers]   = object.current_account.user.setting_expand_spoilers
       store[:reduce_motion]     = object.current_account.user.setting_reduce_motion
+      store[:disable_swiping]   = object.current_account.user.setting_disable_swiping
       store[:advanced_layout]   = object.current_account.user.setting_advanced_layout
       store[:use_blurhash]      = object.current_account.user.setting_use_blurhash
       store[:use_pending_items] = object.current_account.user.setting_use_pending_items
       store[:is_staff]          = object.current_account.user.staff?
       store[:trends]            = Setting.trends && object.current_account.user.setting_trends
       store[:default_content_type] = object.current_account.user.setting_default_content_type
+      store[:system_emoji_font] = object.current_account.user.setting_system_emoji_font
+      store[:crop_images]       = object.current_account.user.setting_crop_images
+    else
+      store[:auto_play_gif] = Setting.auto_play_gif
+      store[:display_media] = Setting.display_media
+      store[:reduce_motion] = Setting.reduce_motion
+      store[:use_blurhash]  = Setting.use_blurhash
+      store[:crop_images]   = Setting.crop_images
     end
 
     store
@@ -67,7 +77,7 @@ class InitialStateSerializer < ActiveModel::Serializer
 
     if object.current_account
       store[:me]                = object.current_account.id.to_s
-      store[:default_privacy]   = object.current_account.user.setting_default_privacy
+      store[:default_privacy]   = object.visibility || object.current_account.user.setting_default_privacy
       store[:default_sensitive] = object.current_account.user.setting_default_sensitive
     end
 

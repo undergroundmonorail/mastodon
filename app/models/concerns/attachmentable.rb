@@ -6,8 +6,21 @@ module Attachmentable
   extend ActiveSupport::Concern
 
   MAX_MATRIX_LIMIT = 16_777_216 # 4096x4096px or approx. 16MB
+  GIF_MATRIX_LIMIT = 921_600    # 1280x720px
+
+  # For some file extensions, there exist different content
+  # type variants, and browsers often send the wrong one,
+  # for example, sending an audio .ogg file as video/ogg,
+  # likewise, MimeMagic also misreports them as such. For
+  # those files, it is necessary to use the output of the
+  # `file` utility instead
+  INCORRECT_CONTENT_TYPES = %w(
+    video/ogg
+    video/webm
+  ).freeze
 
   included do
+    before_post_process :obfuscate_file_name
     before_post_process :set_file_extensions
     before_post_process :check_image_dimensions
     before_post_process :set_file_content_type
@@ -19,7 +32,7 @@ module Attachmentable
     self.class.attachment_definitions.each_key do |attachment_name|
       attachment = send(attachment_name)
 
-      next if attachment.blank? || attachment.queued_for_write[:original].blank?
+      next if attachment.blank? || attachment.queued_for_write[:original].blank? || !INCORRECT_CONTENT_TYPES.include?(attachment.instance_read(:content_type))
 
       attachment.instance_write :content_type, calculated_content_type(attachment)
     end
@@ -42,8 +55,9 @@ module Attachmentable
       next if attachment.blank? || !/image.*/.match?(attachment.content_type) || attachment.queued_for_write[:original].blank?
 
       width, height = FastImage.size(attachment.queued_for_write[:original].path)
+      matrix_limit  = attachment.content_type == 'image/gif' ? GIF_MATRIX_LIMIT : MAX_MATRIX_LIMIT
 
-      raise Mastodon::DimensionsValidationError, "#{width}x#{height} images are not supported" if width.present? && height.present? && (width * height >= MAX_MATRIX_LIMIT)
+      raise Mastodon::DimensionsValidationError, "#{width}x#{height} images are not supported" if width.present? && height.present? && (width * height > matrix_limit)
     end
   end
 
@@ -60,10 +74,18 @@ module Attachmentable
   end
 
   def calculated_content_type(attachment)
-    content_type = Paperclip.run('file', '-b --mime :file', file: attachment.queued_for_write[:original].path).split(/[:;\s]+/).first.chomp
-    content_type = 'video/mp4' if content_type == 'video/x-m4v'
-    content_type
+    Paperclip.run('file', '-b --mime :file', file: attachment.queued_for_write[:original].path).split(/[:;\s]+/).first.chomp
   rescue Terrapin::CommandLineError
     ''
+  end
+
+  def obfuscate_file_name
+    self.class.attachment_definitions.each_key do |attachment_name|
+      attachment = send(attachment_name)
+
+      next if attachment.blank? || attachment.queued_for_write[:original].blank? || attachment.options[:preserve_files]
+
+      attachment.instance_write :file_name, SecureRandom.hex(8) + File.extname(attachment.instance_read(:file_name))
+    end
   end
 end

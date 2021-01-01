@@ -9,26 +9,41 @@ import LoadingIndicator from '../../components/loading_indicator';
 import Column from '../ui/components/column';
 import ProfileColumnHeader from 'flavours/glitch/features/account/components/profile_column_header';
 import HeaderContainer from './containers/header_container';
+import ColumnBackButton from 'flavours/glitch/components/column_back_button';
 import { List as ImmutableList } from 'immutable';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 import { FormattedMessage } from 'react-intl';
 import { fetchAccountIdentityProofs } from '../../actions/identity_proofs';
 import MissingIndicator from 'flavours/glitch/components/missing_indicator';
+import TimelineHint from 'flavours/glitch/components/timeline_hint';
+
+const emptyList = ImmutableList();
 
 const mapStateToProps = (state, { params: { accountId }, withReplies = false }) => {
   const path = withReplies ? `${accountId}:with_replies` : accountId;
 
   return {
+    remote: !!(state.getIn(['accounts', accountId, 'acct']) !== state.getIn(['accounts', accountId, 'username'])),
+    remoteUrl: state.getIn(['accounts', accountId, 'url']),
     isAccount: !!state.getIn(['accounts', accountId]),
     statusIds: state.getIn(['timelines', `account:${path}`, 'items'], ImmutableList()),
     featuredStatusIds: withReplies ? ImmutableList() : state.getIn(['timelines', `account:${accountId}:pinned`, 'items'], ImmutableList()),
     isLoading: state.getIn(['timelines', `account:${path}`, 'isLoading']),
     hasMore:   state.getIn(['timelines', `account:${path}`, 'hasMore']),
+    suspended: state.getIn(['accounts', accountId, 'suspended'], false),
   };
 };
 
-@connect(mapStateToProps)
-export default class AccountTimeline extends ImmutablePureComponent {
+const RemoteHint = ({ url }) => (
+  <TimelineHint url={url} resource={<FormattedMessage id='timeline_hint.resources.statuses' defaultMessage='Older toots' />} />
+);
+
+RemoteHint.propTypes = {
+  url: PropTypes.string.isRequired,
+};
+
+export default @connect(mapStateToProps)
+class AccountTimeline extends ImmutablePureComponent {
 
   static propTypes = {
     params: PropTypes.object.isRequired,
@@ -39,6 +54,10 @@ export default class AccountTimeline extends ImmutablePureComponent {
     hasMore: PropTypes.bool,
     withReplies: PropTypes.bool,
     isAccount: PropTypes.bool,
+    suspended: PropTypes.bool,
+    remote: PropTypes.bool,
+    remoteUrl: PropTypes.string,
+    multiColumn: PropTypes.bool,
   };
 
   componentWillMount () {
@@ -76,11 +95,12 @@ export default class AccountTimeline extends ImmutablePureComponent {
   }
 
   render () {
-    const { statusIds, featuredStatusIds, isLoading, hasMore, isAccount } = this.props;
+    const { statusIds, featuredStatusIds, isLoading, hasMore, suspended, isAccount, multiColumn, remote, remoteUrl } = this.props;
 
     if (!isAccount) {
       return (
         <Column>
+          <ColumnBackButton multiColumn={multiColumn} />
           <MissingIndicator />
         </Column>
       );
@@ -94,20 +114,35 @@ export default class AccountTimeline extends ImmutablePureComponent {
       );
     }
 
+    let emptyMessage;
+
+    if (suspended) {
+      emptyMessage = <FormattedMessage id='empty_column.account_suspended' defaultMessage='Account suspended' />;
+    } else if (remote && statusIds.isEmpty()) {
+      emptyMessage = <RemoteHint url={remoteUrl} />;
+    } else {
+      emptyMessage = <FormattedMessage id='empty_column.account_timeline' defaultMessage='No toots here!' />;
+    }
+
+    const remoteMessage = remote ? <RemoteHint url={remoteUrl} /> : null;
+
     return (
       <Column ref={this.setRef} name='account'>
-        <ProfileColumnHeader onClick={this.handleHeaderClick} />
+        <ProfileColumnHeader onClick={this.handleHeaderClick} multiColumn={multiColumn} />
 
         <StatusList
           prepend={<HeaderContainer accountId={this.props.params.accountId} />}
           alwaysPrepend
+          append={remoteMessage}
           scrollKey='account_timeline'
-          statusIds={statusIds}
+          statusIds={suspended ? emptyList : statusIds}
           featuredStatusIds={featuredStatusIds}
           isLoading={isLoading}
           hasMore={hasMore}
           onLoadMore={this.handleLoadMore}
-          emptyMessage={<FormattedMessage id='empty_column.account_timeline' defaultMessage='No toots here!' />}
+          emptyMessage={emptyMessage}
+          bindToDocument={!multiColumn}
+          timelineId='account'
         />
       </Column>
     );

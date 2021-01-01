@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 class Settings::PreferencesController < Settings::BaseController
-  layout 'admin'
-
-  before_action :authenticate_user!
-
   def show; end
 
   def update
@@ -48,7 +44,9 @@ class Settings::PreferencesController < Settings::BaseController
       :setting_display_media,
       :setting_expand_spoilers,
       :setting_reduce_motion,
+      :setting_disable_swiping,
       :setting_system_font_ui,
+      :setting_system_emoji_font,
       :setting_noindex,
       :setting_hide_network,
       :setting_hide_followers_count,
@@ -59,6 +57,7 @@ class Settings::PreferencesController < Settings::BaseController
       :setting_use_blurhash,
       :setting_use_pending_items,
       :setting_trends,
+      :setting_crop_images,
       notification_emails: %i(follow follow_request reblog favourite mention digest report pending_account trending_tag),
       interactions: %i(must_be_follower must_be_following must_be_following_dm)
     )

@@ -14,9 +14,9 @@ const mapStateToProps = state => ({
   collapseEnabled: state.getIn(['local_settings', 'collapsed', 'enabled']),
 });
 
-@connect(mapStateToProps)
+export default @connect(mapStateToProps)
 @injectIntl
-export default class KeyboardShortcuts extends ImmutablePureComponent {
+class KeyboardShortcuts extends ImmutablePureComponent {
 
   static propTypes = {
     intl: PropTypes.object.isRequired,
@@ -25,10 +25,10 @@ export default class KeyboardShortcuts extends ImmutablePureComponent {
   };
 
   render () {
-    const { intl, collapseEnabled } = this.props;
+    const { intl, collapseEnabled, multiColumn } = this.props;
 
     return (
-      <Column icon='question' heading={intl.formatMessage(messages.heading)}>
+      <Column bindToDocument={!multiColumn} icon='question' heading={intl.formatMessage(messages.heading)}>
         <ColumnBackButtonSlim />
         <div className='keyboard-shortcuts scrollable optionally-scrollable'>
           <table>
@@ -68,6 +68,10 @@ export default class KeyboardShortcuts extends ImmutablePureComponent {
                 <td><FormattedMessage id='keyboard_shortcuts.enter' defaultMessage='to open status' /></td>
               </tr>
               <tr>
+                <td><kbd>e</kbd></td>
+                <td><FormattedMessage id='keyboard_shortcuts.open_media' defaultMessage='to open media' /></td>
+              </tr>
+              <tr>
                 <td><kbd>x</kbd></td>
                 <td><FormattedMessage id='keyboard_shortcuts.toggle_hidden' defaultMessage='to show/hide text behind CW' /></td>
               </tr>
@@ -102,12 +106,20 @@ export default class KeyboardShortcuts extends ImmutablePureComponent {
                 <td><FormattedMessage id='keyboard_shortcuts.toot' defaultMessage='to start a brand new toot' /></td>
               </tr>
               <tr>
+                <td><kbd>alt</kbd>+<kbd>x</kbd></td>
+                <td><FormattedMessage id='keyboard_shortcuts.spoilers' defaultMessage='to show/hide CW field' /></td>
+              </tr>
+              <tr>
                 <td><kbd>backspace</kbd></td>
                 <td><FormattedMessage id='keyboard_shortcuts.back' defaultMessage='to navigate back' /></td>
               </tr>
               <tr>
                 <td><kbd>s</kbd></td>
                 <td><FormattedMessage id='keyboard_shortcuts.search' defaultMessage='to focus search' /></td>
+              </tr>
+              <tr>
+                <td><kbd>alt</kbd>+<kbd>enter</kbd></td>
+                <td><FormattedMessage id='keyboard_shortcuts.secondary_toot' defaultMessage='to send toot using secondary privacy setting' /></td>
               </tr>
               <tr>
                 <td><kbd>esc</kbd></td>

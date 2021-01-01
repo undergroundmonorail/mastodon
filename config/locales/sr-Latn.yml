@@ -6,10 +6,6 @@ sr-Latn:
     about_this: O instanci
     contact: Kontakt
     contact_missing: Nije postavljeno
-    extended_description_html: |
-      <h3>Dobro mesto za pravila</h3>
-      <p>Prošireni opis koji još nije postavljen.</p>
-    generic_description: "%{domain} je server na mreži"
     hosted_on: Mastodont hostovan na %{domain}
     learn_more: Saznajte više
     source_code: Izvorni kod
@@ -51,9 +47,7 @@ sr-Latn:
       email_status: Status e-pošte
       enable: Uključi
       enabled: Uključeno
-      feed_url: Adresa dovoda
       followers: Pratioci
-      followers_url: Adresa pratioca
       follows: Praćeni
       inbox_url: Adresa sandučeta
       location:
@@ -73,9 +67,7 @@ sr-Latn:
       most_recent_activity: Najskorija aktivnost
       most_recent_ip: Najskorija IP adresa
       not_subscribed: Nije pretplaćen
-      outbox_url: Odlazno sanduče
       perform_full_suspension: Izvrši kompletno isključenje
-      profile_url: Adresa profila
       promote: Unapredi
       protocol: Protokol
       public: Javno
@@ -91,7 +83,6 @@ sr-Latn:
       roles:
         staff: Osoblje
         user: Korisnik
-      salmon_url: Salmon adresa
       search: Pretraga
       shared_inbox_url: Adresa deljenog sandučeta
       show:
@@ -314,26 +305,24 @@ sr-Latn:
       over_x_years: "%{count}god"
       x_months: "%{count}mesec"
   deletes:
-    bad_password_msg: Dobar pokušaj, hakeri! Neispravna lozinka
     confirm_password: Unesite trenutnu lozinku da bismo proverili Vaš identitet
-    description_html: Ovo će <strong>trajno, bespovratno</strong> ukloniti sadržaj sa Vašef naloga i deaktivirati ga. Vaše korisničko ime će ostati rezervisano da se spreči da se neko ne predstavlja kao Vi sutra.
     proceed: Obriši nalog
     success_msg: Vaš nalog je uspešno obrisan
-    warning_html: Garantovano je samo brisanje sadržaja sa ove instance. Sadržaj koji je deljen dalje će verovatno da ostavi neke tragove. Nedostupni i ugašeni serveri, kao i serveri koji su odjavljeni od primanja statusa od Vas, neće ažurirati svoje baze.
-    warning_title: Dostupnost rasejanog sadržaja
   errors:
+    '400': The request you submitted was invalid or malformed.
     '403': Nemate dozvola da vidite ovu stranu.
     '404': Strana koju ste tražili ne postoji.
+    '406': This page is not available in the requested format.
     '410': Strana koju ste tražili više ne postoji.
     '422': 
     '429': Uspored
     '500':
       content: Izvinjavamo se, nešto je pošlo po zlu sa ove strane.
       title: Strana nije ispravna
+    '503': The page could not be served due to a temporary server failure.
     noscript_html: Da biste koristili Mastodont veb aplikaciju, omogućite JavaScript. U suprotnom, probajte neku od <a href="%{apps_path}">originalnih aplikacija</a> za Mastodont za Vašu platformu.
   exports:
     blocks: Blokirali ste
-    follows: Pratite
     mutes: Ućutkali ste
     storage: Multimedijalno skladište
   generic:
@@ -382,9 +371,6 @@ sr-Latn:
       too_many: Ne može se prikačiti više od 4 fajla
   migrations:
     acct: korisnik@domen novog naloga
-    currently_redirecting: 'Profil Vam je podešen da preusmerava na :'
-    proceed: Sačuvaj
-    updated_msg: Prebacivanje postavki Vašeg naloga uspešno izmenjeno!
   moderation:
     title: Moderacija
   notification_mailer:
@@ -486,21 +472,14 @@ sr-Latn:
   themes:
     default: Mastodont
   two_factor_authentication:
-    code_hint: Unesite kod sa Vaše aplikacije za proveru identiteta da potvrdite
-    description_html: Ako uključite <strong>dvofaktorsku identifikaciju</strong>, moraćete da imate telefon sa sobom da biste mogli da se prijavite. Telefon će onda generisati tokene za Vašu prijavu.
     disable: Isključi
-    enable: Uključi
     enabled: Dvofaktorska identifikacija je uključena
     enabled_success: Dvofaktorska identifikacija je uspešno uključena
     generate_recovery_codes: Generiši kodove za oporavak
-    instructions_html: "<strong>Skenirajte ovaj QR kod u Google Authenticator ili nekoj sličnoj TOTP aplikaciji na Vašem telefonu</strong>. Od sada, ta aplikacija će Vam generisati tokene koje morate uneti da biste se prijavili."
     lost_recovery_codes: Kodovi za oporavak Vam omogućavaju da povratite pristup nalogu ako izgubite telefon. Ako izgubite kodove za oporavak, možete ih regenerisati ovde. Od tog trenutka, stari kodovi za oporavak više ne važe.
-    manual_instructions: 'Ukoliko ne možete da skenirate QR kod i morate ga unesete ručno, evo je ogoljena šifra:'
     recovery_codes: Napravite rezervu kodova za oporavak
     recovery_codes_regenerated: Kodovi za oporavak uspešno regenerisani
     recovery_instructions_html: Ako ikada izgubite pristup telefonu, možete iskoristiti kodove za oporavak date ispod da povratite pristup nalogu. <strong>Držite kodove za oporavak na sigurnom</strong>. Na primer, odštampajte ih i čuvajte ih sa ostalim važnim dokumentima.
-    setup: Nameštanje
-    wrong_code: Uneseni kod nije ispravan! Da li su vremena na serveru i na uređaju ispravna?
   users:
     invalid_email: Adresa e-pošte nije ispravna
     invalid_otp_token: Neispravni dvofaktorski kod

@@ -5,11 +5,13 @@ import PropTypes from 'prop-types';
 import { FormattedMessage } from 'react-intl';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 import { HotKeys } from 'react-hotkeys';
+import classNames from 'classnames';
 
 // Our imports.
 import Permalink from 'flavours/glitch/components/permalink';
 import AccountContainer from 'flavours/glitch/containers/account_container';
 import NotificationOverlayContainer from '../containers/overlay_container';
+import Icon from 'flavours/glitch/components/icon';
 
 export default class NotificationFollow extends ImmutablePureComponent {
 
@@ -18,6 +20,7 @@ export default class NotificationFollow extends ImmutablePureComponent {
     id: PropTypes.string.isRequired,
     account: ImmutablePropTypes.map.isRequired,
     notification: ImmutablePropTypes.map.isRequired,
+    unread: PropTypes.bool,
   };
 
   handleMoveUp = () => {
@@ -58,7 +61,7 @@ export default class NotificationFollow extends ImmutablePureComponent {
   }
 
   render () {
-    const { account, notification, hidden } = this.props;
+    const { account, notification, hidden, unread } = this.props;
 
     //  Links to the display name.
     const displayName = account.get('display_name_html') || account.get('username');
@@ -75,10 +78,10 @@ export default class NotificationFollow extends ImmutablePureComponent {
     //  Renders.
     return (
       <HotKeys handlers={this.getHandlers()}>
-        <div className='notification notification-follow focusable' tabIndex='0'>
+        <div className={classNames('notification notification-follow focusable', { unread })} tabIndex='0'>
           <div className='notification__message'>
             <div className='notification__favourite-icon-wrapper'>
-              <i className='fa fa-fw fa-user-plus' />
+              <Icon fixedWidth id='user-plus' />
             </div>
 
             <FormattedMessage

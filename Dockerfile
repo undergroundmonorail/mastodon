@@ -1,25 +1,34 @@
-FROM ubuntu:18.04 as build-dep
+FROM ubuntu:20.04 as build-dep
 
 # Use bash for the shell
 SHELL ["bash", "-c"]
 
-# Install Node
-ENV NODE_VER="8.15.0"
-RUN	echo "Etc/UTC" > /etc/localtime && \
+# Install Node v12 (LTS)
+ENV NODE_VER="12.20.0"
+RUN ARCH= && \
+    dpkgArch="$(dpkg --print-architecture)" && \
+  case "${dpkgArch##*-}" in \
+    amd64) ARCH='x64';; \
+    ppc64el) ARCH='ppc64le';; \
+    s390x) ARCH='s390x';; \
+    arm64) ARCH='arm64';; \
+    armhf) ARCH='armv7l';; \
+    i386) ARCH='x86';; \
+    *) echo "unsupported architecture"; exit 1 ;; \
+  esac && \
+    echo "Etc/UTC" > /etc/localtime && \
 	apt update && \
-	apt -y install wget make gcc g++ python && \
+	apt -y install wget python && \
 	cd ~ && \
-	wget https://nodejs.org/download/release/v$NODE_VER/node-v$NODE_VER.tar.gz && \
-	tar xf node-v$NODE_VER.tar.gz && \
-	cd node-v$NODE_VER && \
-	./configure --prefix=/opt/node && \
-	make -j$(nproc) > /dev/null && \
-	make install
+	wget https://nodejs.org/download/release/v$NODE_VER/node-v$NODE_VER-linux-$ARCH.tar.gz && \
+	tar xf node-v$NODE_VER-linux-$ARCH.tar.gz && \
+	rm node-v$NODE_VER-linux-$ARCH.tar.gz && \
+	mv node-v$NODE_VER-linux-$ARCH /opt/node
 
 # Install jemalloc
-ENV JE_VER="5.1.0"
+ENV JE_VER="5.2.1"
 RUN apt update && \
-	apt -y install autoconf && \
+	apt -y install make autoconf gcc g++ && \
 	cd ~ && \
 	wget https://github.com/jemalloc/jemalloc/archive/$JE_VER.tar.gz && \
 	tar xf $JE_VER.tar.gz && \
@@ -27,10 +36,11 @@ RUN apt update && \
 	./autogen.sh && \
 	./configure --prefix=/opt/jemalloc && \
 	make -j$(nproc) > /dev/null && \
-	make install_bin install_include install_lib
+	make install_bin install_include install_lib && \
+	cd .. && rm -rf jemalloc-$JE_VER $JE_VER.tar.gz
 
-# Install ruby
-ENV RUBY_VER="2.6.1"
+# Install Ruby
+ENV RUBY_VER="2.7.2"
 ENV CPPFLAGS="-I/opt/jemalloc/include"
 ENV LDFLAGS="-L/opt/jemalloc/lib/"
 RUN apt update && \
@@ -47,7 +57,8 @@ RUN apt update && \
 	  --disable-install-doc && \
 	ln -s /opt/jemalloc/lib/* /usr/lib/ && \
 	make -j$(nproc) > /dev/null && \
-	make install
+	make install && \
+	cd .. && rm -rf ruby-$RUBY_VER.tar.gz ruby-$RUBY_VER
 
 ENV PATH="${PATH}:/opt/ruby/bin:/opt/node/bin"
 
@@ -60,10 +71,12 @@ RUN npm install -g yarn && \
 COPY Gemfile* package.json yarn.lock /opt/mastodon/
 
 RUN cd /opt/mastodon && \
-	bundle install -j$(nproc) --deployment --without development test && \
+  bundle config set deployment 'true' && \
+  bundle config set without 'development test' && \
+	bundle install -j$(nproc) && \
 	yarn install --pure-lockfile
 
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # Copy over all the langs needed for runtime
 COPY --from=build-dep /opt/node /opt/node
@@ -87,8 +100,8 @@ RUN apt update && \
 # Install mastodon runtime deps
 RUN apt -y --no-install-recommends install \
 	  libssl1.1 libpq5 imagemagick ffmpeg \
-	  libicu60 libprotobuf10 libidn11 libyaml-0-2 \
-	  file ca-certificates tzdata libreadline7 && \
+	  libicu66 libprotobuf17 libidn11 libyaml-0-2 \
+	  file ca-certificates tzdata libreadline8 && \
 	apt -y install gcc && \
 	ln -s /opt/mastodon /mastodon && \
 	gem install bundler && \
@@ -96,11 +109,14 @@ RUN apt -y --no-install-recommends install \
 	rm -rf /var/lib/apt/lists/*
 
 # Add tini
-ENV TINI_VERSION="0.18.0"
-ENV TINI_SUM="12d20136605531b09a2c2dac02ccee85e1b874eb322ef6baf7561cd93f93c855"
-ADD https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini /tini
-RUN echo "$TINI_SUM tini" | sha256sum -c -
-RUN chmod +x /tini
+ENV TINI_VERSION="0.19.0"
+RUN dpkgArch="$(dpkg --print-architecture)" && \
+	ARCH=$dpkgArch && \
+	wget https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini-$ARCH \
+	https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini-$ARCH.sha256sum && \
+	cat tini-$ARCH.sha256sum | sha256sum -c - && \
+	mv tini-$ARCH /tini && rm tini-$ARCH.sha256sum && \
+	chmod +x /tini
 
 # Copy over mastodon source, and dependencies from building, and set permissions
 COPY --chown=mastodon:mastodon . /opt/mastodon
@@ -125,3 +141,4 @@ RUN cd ~ && \
 # Set the work dir and the container entry point
 WORKDIR /opt/mastodon
 ENTRYPOINT ["/tini", "--"]
+EXPOSE 3000 4000

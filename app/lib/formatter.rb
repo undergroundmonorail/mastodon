@@ -12,6 +12,8 @@ class HTMLRenderer < Redcarpet::Render::HTML
   def autolink(link, link_type)
     return link if link_type == :email
     Formatter.instance.link_url(link)
+  rescue Addressable::URI::InvalidURIError, IDN::Idna::IdnaError
+    encode(link)
   end
 
   private
@@ -60,7 +62,7 @@ class Formatter
     html = "RT @#{prepend_reblog} #{html}" if prepend_reblog
     html = format_markdown(html) if status.content_type == 'text/markdown'
     html = encode_and_link_urls(html, linkable_accounts, keep_html: %w(text/markdown text/html).include?(status.content_type))
-    html = reformat(html) if %w(text/markdown text/html).include?(status.content_type)
+    html = reformat(html, true) if %w(text/markdown text/html).include?(status.content_type)
     html = encode_custom_emojis(html, status.emojis, options[:autoplay]) if options[:custom_emojify]
 
     unless %w(text/markdown text/html).include?(status.content_type)
@@ -76,8 +78,10 @@ class Formatter
     html.delete("\r").delete("\n")
   end
 
-  def reformat(html)
-    sanitize(html, Sanitize::Config::MASTODON_STRICT)
+  def reformat(html, outgoing = false)
+    sanitize(html, Sanitize::Config::MASTODON_STRICT.merge(outgoing: outgoing))
+  rescue ArgumentError
+    ''
   end
 
   def plaintext(status)
@@ -115,8 +119,7 @@ class Formatter
   end
 
   def format_field(account, str, **options)
-    return reformat(str).html_safe unless account.local? # rubocop:disable Rails/OutputSafety
-    html = encode_and_link_urls(str, me: true)
+    html = account.local? ? encode_and_link_urls(str, me: true) : reformat(str)
     html = encode_custom_emojis(html, account.emojis, options[:autoplay]) if options[:custom_emojify]
     html.html_safe # rubocop:disable Rails/OutputSafety
   end
@@ -130,7 +133,7 @@ class Formatter
   end
 
   def link_url(url)
-    "<a href=\"#{encode(url)}\" target=\"blank\" rel=\"nofollow noopener\">#{link_html(url)}</a>"
+    "<a href=\"#{encode(url)}\" target=\"blank\" rel=\"nofollow noopener noreferrer\">#{link_html(url)}</a>"
   end
 
   private
@@ -198,6 +201,7 @@ class Formatter
     end
   end
 
+  # rubocop:disable Metrics/BlockNesting
   def encode_custom_emojis(html, emojis, animate = false)
     return html if emojis.empty?
 
@@ -252,6 +256,7 @@ class Formatter
 
     html
   end
+  # rubocop:enable Metrics/BlockNesting
 
   def rewrite(text, entities, keep_html = false)
     text = text.to_s
@@ -310,8 +315,9 @@ class Formatter
     end
 
     standard = Extractor.extract_entities_with_indices(text, options)
+    extra = Extractor.extract_extra_uris_with_indices(text, options)
 
-    Extractor.remove_overlapping_entities(special + standard)
+    Extractor.remove_overlapping_entities(special + standard + extra)
   end
 
   def html_friendly_extractor(html, options = {})
@@ -339,7 +345,7 @@ class Formatter
 
   def link_to_url(entity, options = {})
     url        = Addressable::URI.parse(entity[:url])
-    html_attrs = { target: '_blank', rel: 'nofollow noopener' }
+    html_attrs = { target: '_blank', rel: 'nofollow noopener noreferrer' }
 
     html_attrs[:rel] = "me #{html_attrs[:rel]}" if options[:me]
 
@@ -372,7 +378,7 @@ class Formatter
 
   def link_html(url)
     url    = Addressable::URI.parse(url).to_s
-    prefix = url.match(/\Ahttps?:\/\/(www\.)?/).to_s
+    prefix = url.match(/\A(https?:\/\/(www\.)?|xmpp:)/).to_s
     text   = url[prefix.length, 30]
     suffix = url[prefix.length + 30..-1]
     cutoff = url[prefix.length..-1].length > 30

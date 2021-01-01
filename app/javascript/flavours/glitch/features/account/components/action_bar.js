@@ -8,8 +8,8 @@ import { me, isStaff } from 'flavours/glitch/util/initial_state';
 import { profileLink, accountAdminLink } from 'flavours/glitch/util/backend_links';
 import Icon from 'flavours/glitch/components/icon';
 
-@injectIntl
-export default class ActionBar extends React.PureComponent {
+export default @injectIntl
+class ActionBar extends React.PureComponent {
 
   static propTypes = {
     account: ImmutablePropTypes.map.isRequired,
@@ -26,12 +26,25 @@ export default class ActionBar extends React.PureComponent {
   render () {
     const { account, intl } = this.props;
 
+    if (account.get('suspended')) {
+      return (
+        <div>
+          <div className='account__disclaimer'>
+            <Icon id='info-circle' fixedWidth /> <FormattedMessage
+              id='account.suspended_disclaimer_full'
+              defaultMessage="This user has been suspended by a moderator."
+            />
+          </div>
+        </div>
+      );
+    }
+
     let extraInfo = '';
 
     if (account.get('acct') !== account.get('username')) {
       extraInfo = (
         <div className='account__disclaimer'>
-          <Icon icon='info-circle' fixedWidth /> <FormattedMessage
+          <Icon id='info-circle' fixedWidth /> <FormattedMessage
             id='account.disclaimer_full'
             defaultMessage="Information below may reflect the user's profile incompletely."
           />

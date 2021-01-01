@@ -64,9 +64,9 @@ export default class ComposerOptionsDropdownContent extends React.PureComponent 
     document.addEventListener('click', this.handleDocumentClick, false);
     document.addEventListener('touchend', this.handleDocumentClick, withPassive);
     if (this.focusedItem) {
-      this.focusedItem.focus();
+      this.focusedItem.focus({ preventScroll: true });
     } else {
-      this.node.firstChild.focus();
+      this.node.firstChild.focus({ preventScroll: true });
     }
     this.setState({ mounted: true });
   }
@@ -77,9 +77,7 @@ export default class ComposerOptionsDropdownContent extends React.PureComponent 
     document.removeEventListener('touchend', this.handleDocumentClick, withPassive);
   }
 
-  handleClick = (e) => {
-    const name = e.currentTarget.getAttribute('data-index');
-
+  handleClick = (name, e) => {
     const {
       onChange,
       onClose,
@@ -103,13 +101,12 @@ export default class ComposerOptionsDropdownContent extends React.PureComponent 
     }
   }
 
-  handleKeyDown = e => {
+  handleKeyDown = (name, e) => {
     const { items } = this.props;
-    const name = e.currentTarget.getAttribute('data-index');
     const index = items.findIndex(item => {
       return (item.name === name);
     });
-    let element;
+    let element = null;
 
     switch(e.key) {
     case 'Escape':
@@ -120,18 +117,10 @@ export default class ComposerOptionsDropdownContent extends React.PureComponent 
       this.handleClick(e);
       break;
     case 'ArrowDown':
-      element = this.node.childNodes[index + 1];
-      if (element) {
-        element.focus();
-        this.handleChange(element.getAttribute('data-index'));
-      }
+      element = this.node.childNodes[index + 1] || this.node.firstChild;
       break;
     case 'ArrowUp':
-      element = this.node.childNodes[index - 1];
-      if (element) {
-        element.focus();
-        this.handleChange(element.getAttribute('data-index'));
-      }
+      element = this.node.childNodes[index - 1] || this.node.lastChild;
       break;
     case 'Tab':
       if (e.shiftKey) {
@@ -139,27 +128,20 @@ export default class ComposerOptionsDropdownContent extends React.PureComponent 
       } else {
         element = this.node.childNodes[index + 1] || this.node.firstChild;
       }
-      if (element) {
-        element.focus();
-        this.handleChange(element.getAttribute('data-index'));
-        e.preventDefault();
-        e.stopPropagation();
-      }
       break;
     case 'Home':
       element = this.node.firstChild;
-      if (element) {
-        element.focus();
-        this.handleChange(element.getAttribute('data-index'));
-      }
       break;
     case 'End':
       element = this.node.lastChild;
-      if (element) {
-        element.focus();
-        this.handleChange(element.getAttribute('data-index'));
-      }
       break;
+    }
+
+    if (element) {
+      element.focus();
+      this.handleChange(element.getAttribute('data-index'));
+      e.preventDefault();
+      e.stopPropagation();
     }
   }
 
@@ -183,16 +165,16 @@ export default class ComposerOptionsDropdownContent extends React.PureComponent 
     let prefix = null;
 
     if (on !== null && typeof on !== 'undefined') {
-      prefix = <Toggle checked={on} onChange={this.handleClick} />;
+      prefix = <Toggle checked={on} onChange={this.handleClick.bind(this, name)} />;
     } else if (icon) {
-      prefix = <Icon className='icon' fullwidth icon={icon} />
+      prefix = <Icon className='icon' fixedWidth id={icon} />
     }
 
     return (
       <div
         className={computedClass}
-        onClick={this.handleClick}
-        onKeyDown={this.handleKeyDown}
+        onClick={this.handleClick.bind(this, name)}
+        onKeyDown={this.handleKeyDown.bind(this, name)}
         role='option'
         tabIndex='0'
         key={name}

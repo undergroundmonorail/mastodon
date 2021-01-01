@@ -124,8 +124,23 @@
 
 .embed,
 .public-layout {
+  .status__content[data-spoiler=folded] {
+    .e-content {
+      display: none;
+    }
+
+    p:first-child {
+      margin-bottom: 0;
+    }
+  }
+
   .detailed-status {
     padding: 15px;
+
+    .detailed-status__display-avatar .account__avatar {
+      width: 48px;
+      height: 48px;
+    }
   }
 
   .status {
@@ -135,6 +150,11 @@
     &__avatar {
       left: 15px;
       top: 17px;
+
+      .account__avatar {
+        width: 48px;
+        height: 48px;
+      }
     }
 
     &__content {
@@ -162,6 +182,13 @@
     .video-player {
       margin-top: 10px;
     }
+
+    &__action-bar-button {
+      font-size: 18px;
+      width: 23.1429px;
+      height: 23.1429px;
+      line-height: 23.15px;
+    }
   }
 }
 
@@ -181,6 +208,11 @@
       width: auto;
       margin: initial;
       padding: initial;
+      padding-bottom: 1px;
+    }
+
+    .status__visibility-icon {
+      padding: 0 4px;
     }
 
     .status__info .status__display-name {
@@ -189,10 +221,6 @@
       padding: 6px 0;
       padding-right: 25px;
       margin: initial;
-
-      .display-name strong {
-        display: inline;
-      }
     }
 
     .status__avatar {
@@ -216,9 +244,27 @@
         padding-right: 0;
       }
 
-      .status__relative-time {
+      .status__relative-time,
+      .status__visibility-icon {
         float: left;
       }
     }
+  }
+}
+
+.status__content__read-more-button {
+  display: block;
+  font-size: 15px;
+  line-height: 20px;
+  color: lighten($ui-highlight-color, 8%);
+  border: 0;
+  background: transparent;
+  padding: 0;
+  padding-top: 8px;
+  text-decoration: none;
+
+  &:hover,
+  &:active {
+    text-decoration: underline;
   }
 }

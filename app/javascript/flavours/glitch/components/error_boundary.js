@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FormattedMessage } from 'react-intl';
 import { preferencesLink } from 'flavours/glitch/util/backend_links';
+import StackTrace from 'stacktrace-js';
 
 export default class ErrorBoundary extends React.PureComponent {
 
@@ -11,15 +12,29 @@ export default class ErrorBoundary extends React.PureComponent {
 
   state = {
     hasError: false,
+    errorMessage: undefined,
     stackTrace: undefined,
+    mappedStackTrace: undefined,
     componentStack: undefined,
   }
 
   componentDidCatch(error, info) {
     this.setState({
       hasError: true,
+      errorMessage: error.toString(),
       stackTrace: error.stack,
       componentStack: info && info.componentStack,
+      mappedStackTrace: undefined,
+    });
+
+    StackTrace.fromError(error).then((stackframes) => {
+      this.setState({
+        mappedStackTrace: stackframes.map((sf) => sf.toString()).join('\n'),
+      });
+    }).catch(() => {
+      this.setState({
+        mappedStackTrace: undefined,
+      });
     });
   }
 
@@ -29,13 +44,18 @@ export default class ErrorBoundary extends React.PureComponent {
   }
 
   render() {
-    const { hasError, stackTrace, componentStack } = this.state;
+    const { hasError, errorMessage, stackTrace, mappedStackTrace, componentStack } = this.state;
 
     if (!hasError) return this.props.children;
 
+    const likelyBrowserAddonIssue = errorMessage && errorMessage.includes('NotFoundError');
+
     let debugInfo = '';
     if (stackTrace) {
-      debugInfo += 'Stack trace\n-----------\n\n```\n' + stackTrace.toString() + '\n```';
+      debugInfo += 'Stack trace\n-----------\n\n```\n' + errorMessage + '\n' + stackTrace.toString() + '\n```';
+    }
+    if (mappedStackTrace) {
+      debugInfo += 'Mapped stack trace\n-----------\n\n```\n' + errorMessage + '\n' + mappedStackTrace.toString() + '\n```';
     }
     if (componentStack) {
       if (debugInfo) {
@@ -52,11 +72,19 @@ export default class ErrorBoundary extends React.PureComponent {
             <FormattedMessage id='web_app_crash.content' defaultMessage='You could try any of the following:' />
           </p>
           <ul>
+            { likelyBrowserAddonIssue && (
+              <li>
+                <FormattedMessage
+                  id='web_app_crash.disable_addons'
+                  defaultMessage='Disable browser add-ons or built-in translation tools'
+                />
+              </li>
+            ) }
             <li>
               <FormattedMessage
                 id='web_app_crash.report_issue'
                 defaultMessage='Report a bug in the {issuetracker}'
-                values={{ issuetracker: <a href='https://github.com/glitch-soc/mastodon/issues' rel='noopener' target='_blank'><FormattedMessage id='web_app_crash.issue_tracker' defaultMessage='issue tracker' /></a> }}
+                values={{ issuetracker: <a href='https://github.com/glitch-soc/mastodon/issues' rel='noopener noreferrer' target='_blank'><FormattedMessage id='web_app_crash.issue_tracker' defaultMessage='issue tracker' /></a> }}
               />
               { debugInfo !== '' && (
                 <details>

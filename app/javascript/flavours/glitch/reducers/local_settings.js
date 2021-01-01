@@ -17,12 +17,14 @@ const initialState = ImmutableMap({
   confirm_missing_media_description: false,
   confirm_boost_missing_media_description: false,
   confirm_before_clearing_draft: true,
+  prepend_cw_re: true,
   preselect_on_reply: true,
   inline_preview_cards: true,
   hicolor_privacy_icons: false,
   show_content_type_choice: false,
   filtering_behavior: 'hide',
   tag_misleading_links: true,
+  rewrite_mentions: 'no',
   content_warnings : ImmutableMap({
     auto_unfold : false,
     filter      : null,
@@ -47,10 +49,13 @@ const initialState = ImmutableMap({
     letterbox        : true,
     fullwidth        : true,
     reveal_behind_cw : false,
+    pop_in_player    : true,
+    pop_in_position  : 'right',
   }),
   notifications : ImmutableMap({
     favicon_badge : false,
     tab_badge     : true,
+    show_unread   : true,
   }),
 });
 

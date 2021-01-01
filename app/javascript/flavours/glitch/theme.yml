@@ -2,7 +2,7 @@
 pack:
   about: packs/about.js
   admin: packs/public.js
-  auth:
+  auth: packs/public.js
   common:
     filename: packs/common.js
     stylesheet: true
@@ -18,7 +18,7 @@ pack:
   mailer:
   modal:
   public: packs/public.js
-  settings:
+  settings: packs/settings.js
   share: packs/share.js
 
 #  (OPTIONAL) The directory which contains localization files for
